@@ -1,0 +1,1 @@
+// @vintelarg/analytics — exports públicos
