@@ -1,0 +1,13 @@
+{
+  "name": "vintelarg-analytics",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @aware/portal-app dev",
+    "build": "pnpm --filter @aware/portal-app build",
+    "start": "pnpm --filter @aware/portal-app start",
+    "lint": "pnpm --filter @aware/portal-app lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

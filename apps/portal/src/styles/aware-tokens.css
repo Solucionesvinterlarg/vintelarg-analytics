@@ -1,0 +1,379 @@
+/* ============================================================
+   A-ware® Design System — Colors & Typography
+   Brand manual: assets/Manual-de-Marca.pdf
+   Last updated: 2026-04
+   ============================================================ */
+
+/* --- Web fonts (Google Fonts substitution) --------------------
+   The brand manual specifies:
+   • Plus Jakarta Sans (primary, sans-serif) — matches manual's
+     recommendation of a flexible Google Fonts sans-serif.
+   • Merriweather (secondary, serif accent).
+   • Gilroy is noted in the manual as the logotype font, but is
+     NOT to be used in product UI. Reserved strictly for the
+     logo lockup. We ship no font file for it; the logo is always
+     rendered from the bitmap in assets/.
+   ------------------------------------------------------------- */
+/* Local Plus Jakarta Sans (italic variable) + Merriweather from Google Fonts.
+   Plus Jakarta Sans upright weights still come from Google while only the italic
+   variable is shipped locally — drop the upright variable .ttf into fonts/ and
+   add a second @font-face to go fully offline. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('fonts/PlusJakartaSans-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Merriweather';
+  src: url('fonts/Merriweather-VariableFont.ttf') format('truetype-variations');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Merriweather';
+  src: url('fonts/Merriweather-Italic-VariableFont.ttf') format('truetype-variations');
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* ============================================================
+     COLORS — Primitive tokens
+     ============================================================ */
+
+  /* Core brand — manual Pantone 2725 C (página 16 del Manual de Marca) */
+  --aw-violet:         #685BC7;  /* primary · Pantone 2725 C (manual oficial) */
+  --aw-violet-light:   #E8E5F8;  /* tinted violet for surfaces/chips */
+  --aw-violet-deep:    #4B3FA0;  /* pressed/hover darker */
+  --aw-violet-ink:     #2A2580;  /* text on violet-light */
+
+  /* Dark surfaces — for sidebars, dark blocks, footers */
+  --aw-purple-900:     #201A4C;  /* deepest — sidebars, dark blocks, footers */
+  --aw-purple-950:     #181230;  /* cooler alt dark */
+  --aw-purple-800:     #332A7A;
+  --aw-purple-700:     #483BAB;
+
+  /* Real surface + text from spec */
+  --aw-surface:        #F6F5F2;
+  --aw-text:           #1E2128;
+
+  /* Secondary desaturated palette (per manual) */
+  --aw-teal:           #4B6C76;  /* muted teal — Bienestar accent */
+  --aw-teal-light:     #D7E0E3;
+  --aw-pink:           #D79496;  /* dusty pink — Belleza accent */
+  --aw-pink-light:     #F2DFE0;
+  --aw-sand:           #C9B79A;  /* warm sand — Hogar accent */
+  --aw-sand-light:     #EDE4D5;
+  --aw-olive:          #8A8F6C;  /* muted olive — Deportes accent */
+  --aw-olive-light:    #E2E3D4;
+  --aw-mauve:          #9E7E97;  /* mauve — Mascotas accent */
+  --aw-mauve-light:    #E8DCE4;
+
+  /* Neutrals */
+  --aw-black:          #131519;  /* brand black — primary */
+  --aw-ink:            #1E2128;  /* near-black body text */
+  --aw-graphite:       #3C424C;
+  --aw-slate:          #6B7280;
+  --aw-stone:          #A1A5AE;
+  --aw-mist:           #D9DAE0;
+  --aw-chalk:          #EEEDEA;
+  --aw-paper:          #F6F5F2;  /* brand background */
+  --aw-white:          #FFFFFF;
+
+  /* Semantic state colors (derived, accessible on --aw-paper) */
+  --aw-success:        #3F8F5E;
+  --aw-success-light:  #DCEEE3;
+  --aw-warning:        #C98A2B;
+  --aw-warning-light:  #F6E7CD;
+  --aw-danger:         #B84A52;
+  --aw-danger-light:   #F3D9DB;
+  --aw-info:           var(--aw-violet);
+  --aw-info-light:     var(--aw-violet-light);
+
+  /* ============================================================
+     COLORS — Semantic / role tokens
+     ============================================================ */
+
+  --bg:                var(--aw-paper);
+  --bg-elevated:       var(--aw-white);
+  --bg-sunken:         var(--aw-chalk);
+  --bg-inverse:        var(--aw-black);
+  --bg-brand:          var(--aw-violet);
+  --bg-brand-soft:     var(--aw-violet-light);
+
+  --fg:                var(--aw-ink);          /* primary text */
+  --fg-muted:          var(--aw-graphite);     /* secondary text */
+  --fg-subtle:         var(--aw-slate);        /* tertiary / meta */
+  --fg-faint:          var(--aw-stone);        /* placeholders, disabled */
+  --fg-inverse:        var(--aw-white);
+  --fg-brand:          var(--aw-violet);
+  --fg-on-brand:       var(--aw-white);
+
+  --border:            var(--aw-mist);
+  --border-strong:     var(--aw-stone);
+  --border-subtle:     var(--aw-chalk);
+  --border-brand:      var(--aw-violet);
+
+  /* Category accents — used for section chips, badges, illustrations */
+  --cat-hogar:         var(--aw-sand);
+  --cat-belleza:       var(--aw-pink);
+  --cat-bienestar:     var(--aw-teal);
+  --cat-deportes:      var(--aw-olive);
+  --cat-mascotas:      var(--aw-mauve);
+
+  /* ============================================================
+     TYPOGRAPHY — Families
+     ============================================================ */
+  --font-sans:   'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --font-serif:  'Merriweather', Georgia, 'Times New Roman', serif;
+  --font-mono:   ui-monospace, SFMono-Regular, Menlo, 'Roboto Mono', monospace;
+
+  /* Type scale (1.200 minor-third, rounded) */
+  --text-2xs:   11px;
+  --text-xs:    12px;
+  --text-sm:    14px;
+  --text-base:  16px;
+  --text-md:    18px;
+  --text-lg:    20px;
+  --text-xl:    24px;
+  --text-2xl:   30px;
+  --text-3xl:   36px;
+  --text-4xl:   48px;
+  --text-5xl:   64px;
+  --text-6xl:   80px;
+
+  /* Weights (Plus Jakarta Sans ships 200–800) */
+  --fw-light:     300;
+  --fw-regular:   400;
+  --fw-medium:    500;
+  --fw-semibold:  600;
+  --fw-bold:      700;
+  --fw-extrabold: 800;
+
+  /* Leading */
+  --leading-tight:   1.1;
+  --leading-snug:    1.25;
+  --leading-normal:  1.45;
+  --leading-relaxed: 1.65;
+
+  /* Tracking */
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;
+  --tracking-caps:   0.12em;  /* eyebrow / uppercase labels */
+
+  /* ============================================================
+     RADII — Pills for buttons, 12–20px for cards
+     ============================================================ */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;  /* small cards, inputs */
+  --radius-lg:   16px;  /* cards */
+  --radius-xl:   20px;  /* hero cards */
+  --radius-2xl:  28px;
+  --radius-pill: 100px; /* buttons */
+  --radius-full: 9999px;
+
+  /* ============================================================
+     SPACING — 4px base grid
+     ============================================================ */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+
+  /* ============================================================
+     SHADOWS — Soft, low-contrast. Never heavy/dramatic.
+     ============================================================ */
+  --shadow-xs: 0 1px 2px rgba(19, 21, 25, 0.04);
+  --shadow-sm: 0 1px 3px rgba(19, 21, 25, 0.05), 0 1px 2px rgba(19, 21, 25, 0.03);
+  --shadow-md: 0 4px 12px rgba(19, 21, 25, 0.06), 0 1px 3px rgba(19, 21, 25, 0.04);
+  --shadow-lg: 0 12px 32px rgba(19, 21, 25, 0.08), 0 4px 8px rgba(19, 21, 25, 0.04);
+  --shadow-xl: 0 24px 48px rgba(19, 21, 25, 0.10);
+  --shadow-violet: 0 10px 30px rgba(104, 91, 199, 0.25);
+  --shadow-inner: inset 0 1px 2px rgba(19, 21, 25, 0.06);
+
+  /* ============================================================
+     MOTION
+     ============================================================ */
+  --ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:    cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:       120ms;
+  --dur-base:       200ms;
+  --dur-slow:       320ms;
+  --dur-slower:     500ms;
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  --container-sm: 640px;
+  --container-md: 860px;
+  --container-lg: 1120px;
+  --container-xl: 1280px;
+  --container-2xl: 1440px;
+
+  --focus-ring: 0 0 0 3px rgba(104, 91, 199, 0.35);
+}
+
+/* ============================================================
+   BASE / RESET-LIKE DEFAULTS
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================================================
+   SEMANTIC TYPE — use these classes OR match the selectors
+   ============================================================ */
+
+.aw-display, h1.aw-display {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-extrabold);
+  font-size: var(--text-6xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
+}
+
+.aw-display-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: var(--text-5xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
+}
+
+h1, .aw-h1 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-4);
+}
+
+h2, .aw-h2 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  margin: 0 0 var(--space-3);
+}
+
+h3, .aw-h3 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--space-3);
+}
+
+h4, .aw-h4 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--space-2);
+}
+
+h5, .aw-h5 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--space-2);
+}
+
+p, .aw-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--fg);
+  margin: 0 0 var(--space-3);
+}
+
+.aw-body-lg {
+  font-size: var(--text-md);
+  line-height: var(--leading-relaxed);
+}
+
+.aw-body-sm { font-size: var(--text-sm); line-height: var(--leading-normal); }
+.aw-caption {
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--fg-subtle);
+}
+
+/* Eyebrow / overline — all-caps, wide tracking */
+.aw-eyebrow {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--fg-brand);
+}
+
+/* Serif accent — for editorial quotes, decorative display */
+.aw-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  line-height: var(--leading-snug);
+}
+
+/* Link */
+.aw-link, a.aw-link {
+  color: var(--fg-brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color var(--dur-base) var(--ease-out);
+}
+.aw-link:hover { color: var(--aw-violet-deep); }
+
+/* Code / mono */
+code, .aw-code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--aw-chalk);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-xs);
+}
