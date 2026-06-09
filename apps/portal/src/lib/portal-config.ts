@@ -7,13 +7,22 @@
 
 export type Shell = "desktop" | "mobile";
 
-/** Roles canónicos (claim `role` del IdP). Se normalizan sinónimos en normalizeRole. */
+/**
+ * Roles canónicos de A-ware. Reflejan los 10 roles reales de la base
+ * (`01_auth_role_definitions`). Se normalizan sinónimos en normalizeRole.
+ * Internos (desktop): admin, gerente_comercial, atencion_cliente, comercial,
+ * marketing, cuentas_corrientes, administracion, deposito.
+ * Externos (mobile): lci, emprendedor.
+ */
 export type Role =
   | "admin"
-  | "marketing"
+  | "gerente_comercial"
   | "atencion_cliente"
   | "comercial"
-  | "gerente_comercial"
+  | "marketing"
+  | "cuentas_corrientes"
+  | "administracion"
+  | "deposito"
   | "lci"
   | "emprendedor";
 
@@ -34,6 +43,13 @@ export function normalizeRole(raw: string | undefined | null): Role {
     ei: "gerente_comercial",
     empresario_independiente: "gerente_comercial",
     empresaria_independiente: "gerente_comercial",
+    cuentas_corrientes: "cuentas_corrientes",
+    cuenta_corriente: "cuentas_corrientes",
+    ctacte: "cuentas_corrientes",
+    administracion: "administracion",
+    deposito: "deposito",
+    "depósito": "deposito",
+    almacen: "deposito",
     lci: "lci",
     lider: "lci",
     lider_comercial: "lci",
@@ -48,10 +64,13 @@ export function normalizeRole(raw: string | undefined | null): Role {
 
 export const SHELL_BY_ROLE: Record<Role, Shell> = {
   admin: "desktop",
-  marketing: "desktop",
+  gerente_comercial: "desktop",
   atencion_cliente: "desktop",
   comercial: "desktop",
-  gerente_comercial: "desktop",
+  marketing: "desktop",
+  cuentas_corrientes: "desktop",
+  administracion: "desktop",
+  deposito: "desktop",
   lci: "mobile",
   emprendedor: "mobile",
 };
@@ -59,10 +78,13 @@ export const SHELL_BY_ROLE: Record<Role, Shell> = {
 /** Ruta de aterrizaje post-login según rol. */
 export const LANDING_BY_ROLE: Record<Role, string> = {
   admin: "/admin",
-  marketing: "/dashboard",
-  comercial: "/dashboard",
   gerente_comercial: "/dashboard",
   atencion_cliente: "/atencion",
+  comercial: "/dashboard",
+  marketing: "/dashboard",
+  cuentas_corrientes: "/dashboard",
+  administracion: "/dashboard",
+  deposito: "/dashboard",
   lci: "/home",
   emprendedor: "/home",
 };
@@ -78,10 +100,13 @@ export function landingForRole(raw: string | undefined | null): string {
 /** Etiqueta legible del rol para el footer del sidebar / avatar. */
 export const ROLE_LABEL: Record<Role, string> = {
   admin: "Administrador",
-  marketing: "Marketing",
+  gerente_comercial: "Gerente Comercial",
   atencion_cliente: "At. al Cliente",
   comercial: "Comercial",
-  gerente_comercial: "Gerente Comercial",
+  marketing: "Marketing",
+  cuentas_corrientes: "Cuentas Corrientes",
+  administracion: "Administración",
+  deposito: "Depósito",
   lci: "Líder Comercial",
   emprendedor: "Emprendedora",
 };
@@ -171,10 +196,7 @@ const NAV_ADMIN: NavEntry[] = [
   { id: "br", icon: "file-text", name: "Reportes", href: "/admin#reportes" },
 ];
 
-export const DESKTOP_NAV_BY_ROLE: Record<
-  "admin" | "marketing" | "atencion_cliente" | "comercial" | "gerente_comercial",
-  NavEntry[]
-> = {
+export const DESKTOP_NAV_BY_ROLE: Partial<Record<Role, NavEntry[]>> = {
   admin: NAV_ADMIN,
   marketing: NAV_MARKETING,
   atencion_cliente: NAV_ATENCION,
@@ -184,8 +206,9 @@ export const DESKTOP_NAV_BY_ROLE: Record<
 
 export function desktopNavForRole(raw: string | undefined | null): NavEntry[] {
   const role = normalizeRole(raw);
-  if (role === "lci" || role === "emprendedor") return NAV_GERENTE; // no debería ocurrir
-  return DESKTOP_NAV_BY_ROLE[role];
+  // Roles internos sin nav dedicada (cuentas_corrientes, administracion,
+  // deposito) caen a una vista comercial por defecto hasta tener la propia.
+  return DESKTOP_NAV_BY_ROLE[role] ?? NAV_COMERCIAL;
 }
 
 /** Filtros globales del topbar desktop (handoff). */
