@@ -5,10 +5,9 @@
  * La factura real vive en 04_facturacion_documentos_cabecera/_detalle
  * (NO en 04_facturacion_facturas_*, que están vacías).
  *
- * Columnas de `documentos_cabecera`: verificadas por Diego. Los TIPOS son
- * best-effort; confirmar contra la base (introspección) cuando ANALYTICS_DATABASE_URL
- * esté seteada en .env.local. `documentos_detalle` se agrega en la Etapa 2 (Mix),
- * introspeccionando sus columnas una vez que la conexión esté disponible.
+ * Columnas y TIPOS de `documentos_cabecera`: confirmados por introspección
+ * (1.086.886 filas). Los `character` se declaran como text() — se leen sin
+ * problema. `documentos_detalle` se agrega en la Etapa 2 (Mix).
  */
 import { pgTable, text, integer, numeric, timestamp, bigint } from "drizzle-orm/pg-core";
 
@@ -24,7 +23,7 @@ export const documentosCabecera = pgTable("04_facturacion_documentos_cabecera", 
   // Dimensiones.
   zona: text("zona"),
   canal: text("canal"),
-  gerenteCliente: text("gerente_cliente"),
+  gerenteCliente: integer("gerente_cliente"),
   naturaleza: text("naturaleza"),
   tipoPedido: text("tipo_pedido"),
   // Trazabilidad.
