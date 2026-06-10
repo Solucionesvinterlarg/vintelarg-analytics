@@ -369,3 +369,17 @@ export function extraSectionsForRole(raw: string | undefined | null): Section[] 
 
 /** Filtros globales del topbar desktop (handoff). */
 export const DESKTOP_FILTERS = ["Campaña 202608", "División Zeus", "Canal: Consolidado", "Todas las zonas"];
+
+/**
+ * Chips de filtro del topbar resueltos POR ROL (server-side, igual que el menú —
+ * sin `if(rol)` en el render). Es COSMÉTICO: los filtros mock no re-filtran; el
+ * scope de datos real es Fase 2. Comercial ve su encuadre de equipo en vez de los
+ * filtros globales de empresa; el resto de roles ve los globales (default).
+ */
+export const SCOPE_TOPBAR_FILTERS: Partial<Record<Role, string[]>> = {
+  comercial: ["Mi equipo: Todo mi equipo", "Mis líderes: Todas mis líderes"],
+};
+
+export function topbarFiltersForRole(raw: string | undefined | null): string[] {
+  return SCOPE_TOPBAR_FILTERS[normalizeRole(raw)] ?? DESKTOP_FILTERS;
+}

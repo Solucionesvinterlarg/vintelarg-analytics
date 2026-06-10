@@ -10,14 +10,15 @@ import { EXEC_KPIS, MINI_STATS, ALERT_360, SUB_360, type ExecKpi, type MiniStat,
 
 const TONE_COLOR: Record<ExecTone, string> = { warning: "var(--aw-warning)", success: "var(--aw-success)", danger: "var(--aw-danger)" };
 
-/** Dashboard 360° del Gerente Comercial — maqueta MOCK (Lote 2). */
-export function Dashboard360View() {
+/** Dashboard 360° — vista única (MOCK, Lote 2). Los chips de filtro llegan por
+ *  prop (resueltos por rol en la page); la vista no mira el rol. */
+export function Dashboard360View({ filters = DESKTOP_FILTERS }: { filters?: string[] }) {
   return (
     <>
       <MockBadge />
       <DesktopTopBar
         title="Dashboard 360°"
-        filters={DESKTOP_FILTERS}
+        filters={filters}
         initials="MC"
         right={
           <div className="hidden items-center gap-2 md:flex">
