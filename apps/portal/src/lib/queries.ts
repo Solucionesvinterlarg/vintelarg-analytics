@@ -271,6 +271,40 @@ export async function getPermissionMatrix(): Promise<PermissionMatrix> {
   };
 }
 
+// ---------- P11 Permisos: grilla editable (catálogo × roles) ----------
+export interface PermissionGrid {
+  roles: { id: string; name: string; userType: string | null }[];
+  /** Estado por celda. Clave: `${roleId}|${resource}`. Ausente = sin fila = apagado. */
+  allowed: Record<string, boolean>;
+}
+
+/**
+ * Estado actual de la matriz: roles + un mapa (roleId|resource)→allowed con
+ * TODAS las filas de la tabla (refleja true y false). El cruce con el catálogo
+ * completo (para mostrar ítems sin fila como apagados) lo hace el client.
+ */
+export async function getPermissionGrid(): Promise<PermissionGrid> {
+  const roles = await db
+    .select({ id: roleDefinitions.id, name: roleDefinitions.displayName, userType: roleDefinitions.userType })
+    .from(roleDefinitions)
+    .orderBy(roleDefinitions.sortOrder);
+  const perms = await db
+    .select({
+      roleId: rolePermissions.roleDefinitionId,
+      resource: rolePermissions.resource,
+      allowed: rolePermissions.allowed,
+    })
+    .from(rolePermissions);
+  const allowed: Record<string, boolean> = {};
+  for (const p of perms) {
+    if (p.roleId && p.resource) allowed[`${p.roleId}|${p.resource}`] = !!p.allowed;
+  }
+  return {
+    roles: roles.map((r) => ({ id: r.id, name: r.name ?? r.id, userType: r.userType })),
+    allowed,
+  };
+}
+
 // ---------- Menú por permisos (real; 01_auth_role_permissions) ----------
 //
 // La presentación (label/icono/href) vive en SECTION_CATALOG (portal-config).
