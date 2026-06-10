@@ -1,19 +1,32 @@
 /**
  * Composición del portal por rol (server + client safe — sin imports de React).
- * Define: a qué shell va cada rol, su landing, y los items de navegación.
+ *
+ * Enfoque híbrido:
+ *  - PRESENTACIÓN (label, icono lucide, href, primary, tinte) vive en el código,
+ *    en `SECTION_CATALOG`, indexado por la CLAVE de recurso ("dashboard:360").
+ *  - PERMISOS (qué claves ve cada rol) son datos: hoy un stand-in estático
+ *    (`ROLE_RESOURCE_KEYS`) que el Commit B reemplaza por la matriz de la base
+ *    (`01_auth_role_permissions`, allowed=true). El menú = catálogo filtrado por
+ *    las claves permitidas, ordenado por `SECTION_ORDER` (orden del código, NO
+ *    de la base).
+ *
  * Los iconos se referencian por NOMBRE lucide (string) y se resuelven en el
  * cliente vía <LucideIcon name>, para poder pasar nav desde un Server Component.
  */
 
-export type Shell = "desktop" | "mobile";
-
-/** Roles canónicos (claim `role` del IdP). Se normalizan sinónimos en normalizeRole. */
+/**
+ * Roles canónicos de A-ware. Reflejan los 10 roles reales de la base
+ * (`01_auth_role_definitions`). Se normalizan sinónimos en normalizeRole.
+ */
 export type Role =
   | "admin"
-  | "marketing"
+  | "gerente_comercial"
   | "atencion_cliente"
   | "comercial"
-  | "gerente_comercial"
+  | "marketing"
+  | "cuentas_corrientes"
+  | "administracion"
+  | "deposito"
   | "lci"
   | "emprendedor";
 
@@ -34,6 +47,13 @@ export function normalizeRole(raw: string | undefined | null): Role {
     ei: "gerente_comercial",
     empresario_independiente: "gerente_comercial",
     empresaria_independiente: "gerente_comercial",
+    cuentas_corrientes: "cuentas_corrientes",
+    cuenta_corriente: "cuentas_corrientes",
+    ctacte: "cuentas_corrientes",
+    administracion: "administracion",
+    deposito: "deposito",
+    "depósito": "deposito",
+    almacen: "deposito",
     lci: "lci",
     lider: "lci",
     lider_comercial: "lci",
@@ -46,30 +66,19 @@ export function normalizeRole(raw: string | undefined | null): Role {
   return map[r] ?? "emprendedor";
 }
 
-export const SHELL_BY_ROLE: Record<Role, Shell> = {
-  admin: "desktop",
-  marketing: "desktop",
-  atencion_cliente: "desktop",
-  comercial: "desktop",
-  gerente_comercial: "desktop",
-  lci: "mobile",
-  emprendedor: "mobile",
-};
-
 /** Ruta de aterrizaje post-login según rol. */
 export const LANDING_BY_ROLE: Record<Role, string> = {
   admin: "/admin",
-  marketing: "/dashboard",
-  comercial: "/dashboard",
   gerente_comercial: "/dashboard",
   atencion_cliente: "/atencion",
+  comercial: "/dashboard",
+  marketing: "/dashboard",
+  cuentas_corrientes: "/dashboard",
+  administracion: "/dashboard",
+  deposito: "/dashboard",
   lci: "/home",
   emprendedor: "/home",
 };
-
-export function shellForRole(raw: string | undefined | null): Shell {
-  return SHELL_BY_ROLE[normalizeRole(raw)];
-}
 
 export function landingForRole(raw: string | undefined | null): string {
   return LANDING_BY_ROLE[normalizeRole(raw)];
@@ -78,145 +87,251 @@ export function landingForRole(raw: string | undefined | null): string {
 /** Etiqueta legible del rol para el footer del sidebar / avatar. */
 export const ROLE_LABEL: Record<Role, string> = {
   admin: "Administrador",
-  marketing: "Marketing",
+  gerente_comercial: "Gerente Comercial",
   atencion_cliente: "At. al Cliente",
   comercial: "Comercial",
-  gerente_comercial: "Gerente Comercial",
+  marketing: "Marketing",
+  cuentas_corrientes: "Cuentas Corrientes",
+  administracion: "Administración",
+  deposito: "Depósito",
   lci: "Líder Comercial",
   emprendedor: "Emprendedora",
 };
 
 // ============================================================
-//  NAV — Desktop (sidebar). icon = nombre lucide.
+//  Catálogo de secciones (PRESENTACIÓN), indexado por clave de recurso.
+//  La UI dibuja el menú como sidebar (todas) o tabs (primary) + "Más".
 // ============================================================
-export interface NavItem {
+
+/** Una sección de navegación. icon = nombre lucide. `id` = clave de recurso. */
+export interface Section {
+  /** Clave de recurso, ej. "dashboard:360" (= key en SECTION_CATALOG). */
   id: string;
   icon: string;
   name: string;
   href: string;
+  /** Aparece como bottom-tab en <768px (máx. 4 por rol). El resto va a "Más". */
+  primary?: boolean;
   badge?: string;
   badgeTone?: "danger" | "warn";
+  /** Subtítulo para el sheet "Más" (P03). */
+  desc?: string;
+  /** Tinte del ícono en el sheet "Más" (P03). */
+  tint?: { bg: string; fg: string };
+  /**
+   * Módulo del ecosistema (`01_auth_organization_modules.module_key`) al que
+   * pertenece el ítem. Si el módulo está inactivo para la org, el ítem se
+   * oculta del menú aunque el permiso esté en true (cascada de módulos). Sin
+   * `module` = siempre disponible (no se filtra por cascada).
+   */
+  module?: string;
 }
-export type NavEntry = NavItem | { divider: true } | { label: string };
 
-const NAV_GERENTE: NavEntry[] = [
-  { id: "d", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard" },
-  { id: "fv", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza" },
-  { id: "pc", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance" },
-  { id: "tp", icon: "trophy", name: "Top performers", href: "/dashboard#top" },
-  { id: "rec", icon: "refresh-ccw", name: "Gestión de reclamos", href: "/atencion", badge: "3" },
-  { id: "ind", icon: "git-branch", name: "Indicaciones", href: "/dashboard#indicaciones" },
-  { id: "on", icon: "user-plus", name: "Onboarding", href: "/dashboard#onboarding" },
-  { id: "cc", icon: "coins", name: "Estado de cuenta", href: "/dashboard#cuenta" },
-  { id: "mp", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix" },
-  { id: "cob", icon: "map-pin", name: "Cobertura", href: "/dashboard#cobertura" },
-  { id: "al", icon: "bell", name: "Centro de alertas", href: "/dashboard#alertas", badge: "7", badgeTone: "warn" },
-  { id: "br", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes" },
-  { id: "co", icon: "target", name: "Config. objetivos", href: "/dashboard#objetivos" },
-  { id: "tr", icon: "activity", name: "Tendencia", href: "/dashboard#tendencia" },
-  { id: "pl", icon: "clipboard-list", name: "Plan comercial", href: "/dashboard#plan" },
-  { id: "ac", icon: "graduation-cap", name: "Academia", href: "/dashboard#academia" },
-  { divider: true },
-  { id: "tk", icon: "ticket", name: "Tickets", href: "/atencion" },
-];
+/** Entrada del sidebar: una sección o un separador/título visual. */
+export type NavEntry = Section | { divider: true } | { label: string };
 
-const NAV_COMERCIAL: NavEntry[] = [
-  { id: "d", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard" },
-  { id: "fv", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza" },
-  { id: "pc", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance" },
-  { id: "tp", icon: "trophy", name: "Top performers", href: "/dashboard#top" },
-  { id: "mp", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix" },
-  { id: "cob", icon: "map-pin", name: "Cobertura", href: "/dashboard#cobertura" },
-  { id: "br", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes" },
-  { id: "tr", icon: "activity", name: "Tendencia", href: "/dashboard#tendencia" },
-  { id: "pl", icon: "clipboard-list", name: "Plan comercial", href: "/dashboard#plan" },
-  { divider: true },
-  { id: "crm", icon: "user-search", name: "CRM Contactos", href: "/dashboard#crm" },
-  { id: "ac", icon: "graduation-cap", name: "Academia", href: "/dashboard#academia" },
-];
+/** Type guard: ¿la entrada es una sección navegable (no divider/label)? */
+export function isSection(e: NavEntry): e is Section {
+  return "href" in e;
+}
 
-const NAV_MARKETING: NavEntry[] = [
-  { id: "d", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard" },
-  { id: "pc", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance" },
-  { id: "mp", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix" },
-  { id: "tr", icon: "activity", name: "Tendencia (29 métricas)", href: "/dashboard#tendencia" },
-  { id: "pl", icon: "clipboard-list", name: "Plan comercial BI", href: "/dashboard#plan" },
-  { id: "br", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes" },
-  { divider: true },
-  { id: "crm", icon: "user-search", name: "CRM Contactos", href: "/dashboard#crm" },
-  { id: "ac", icon: "graduation-cap", name: "Academia", href: "/dashboard#academia" },
-];
+const TINT = {
+  amber: { bg: "var(--tint-amber)", fg: "var(--tint-amber-fg)" },
+  blue: { bg: "var(--tint-blue)", fg: "var(--tint-blue-fg)" },
+  green: { bg: "var(--tint-green)", fg: "var(--tint-green-fg)" },
+  violet: { bg: "var(--aw-violet-light)", fg: "var(--aw-violet)" },
+  neutral: { bg: "#F1EFEA", fg: "#5C5A54" },
+} as const;
 
-const NAV_ATENCION: NavEntry[] = [
-  { id: "tk", icon: "ticket", name: "Tickets", href: "/atencion", badge: "12" },
-  { id: "rec", icon: "refresh-ccw", name: "Gestión de reclamos", href: "/atencion#reclamos", badge: "3", badgeTone: "warn" },
-  { divider: true },
-  { id: "crm", icon: "user-search", name: "CRM Contactos", href: "/atencion#crm" },
-  { id: "fv", icon: "users", name: "Fuerza de ventas", href: "/atencion#fuerza" },
-  { id: "ac", icon: "graduation-cap", name: "Academia", href: "/atencion#academia" },
-];
+/**
+ * Catálogo único: clave de recurso → Section (presentación). Cubre las 46 claves
+ * sembradas en `01_auth_role_permissions` + `shared:inicio` (landing, no
+ * permisada). hrefs con `#ancla` apuntan a secciones de la página landing;
+ * algunos son placeholders hasta que exista el módulo.
+ */
+export const SECTION_CATALOG: Record<string, Section> = {
+  // landing (no permisada; siempre disponible para la red comercial)
+  "shared:inicio": { id: "shared:inicio", icon: "home", name: "Inicio", href: "/", primary: true },
 
-const NAV_ADMIN: NavEntry[] = [
-  { id: "pc", icon: "layout-dashboard", name: "Panel de control", href: "/admin" },
-  { id: "us", icon: "users", name: "Usuarios", href: "/admin#usuarios" },
-  { id: "or", icon: "building-2", name: "Organizaciones", href: "/admin#orgs" },
-  { id: "pe", icon: "shield-check", name: "Permisos por rol", href: "/admin/permisos" },
-  { id: "mo", icon: "puzzle", name: "Módulos habilitados", href: "/admin/modulos" },
-  { divider: true },
-  { id: "cc", icon: "settings", name: "Config. campañas", href: "/admin#campanas" },
-  { id: "co", icon: "target", name: "Config. objetivos", href: "/admin#objetivos" },
-  { id: "ac", icon: "graduation-cap", name: "Academia (admin)", href: "/admin#academia" },
-  { divider: true },
-  { id: "d360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard" },
-  { id: "br", icon: "file-text", name: "Reportes", href: "/admin#reportes" },
-];
+  // ---- admin ----
+  "admin:panel": { id: "admin:panel", icon: "layout-dashboard", name: "Panel de control", href: "/admin", primary: true },
+  "admin:usuarios": { id: "admin:usuarios", icon: "users", name: "Usuarios", href: "/admin#usuarios", primary: true },
+  "admin:organizaciones": { id: "admin:organizaciones", icon: "building-2", name: "Organizaciones", href: "/admin#orgs", primary: true },
+  "admin:permisos": { id: "admin:permisos", icon: "shield-check", name: "Permisos por rol", href: "/admin/permisos", primary: true },
+  "admin:modulos": { id: "admin:modulos", icon: "puzzle", name: "Módulos habilitados", href: "/admin/modulos" },
+  "admin:campanas": { id: "admin:campanas", icon: "settings", name: "Config. campañas", href: "/admin#campanas" },
 
-export const DESKTOP_NAV_BY_ROLE: Record<
-  "admin" | "marketing" | "atencion_cliente" | "comercial" | "gerente_comercial",
-  NavEntry[]
-> = {
-  admin: NAV_ADMIN,
-  marketing: NAV_MARKETING,
-  atencion_cliente: NAV_ATENCION,
-  comercial: NAV_COMERCIAL,
-  gerente_comercial: NAV_GERENTE,
+  // ---- dashboard (interno) → módulo reporteria ----
+  "dashboard:360": { id: "dashboard:360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard", primary: true, module: "reporteria" },
+  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza", primary: true, module: "reporteria" },
+  "dashboard:performance": { id: "dashboard:performance", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance", primary: true, module: "reporteria" },
+  "dashboard:top-performers": { id: "dashboard:top-performers", icon: "trophy", name: "Top performers", href: "/dashboard#top", primary: true, module: "reporteria" },
+  "dashboard:indicaciones": { id: "dashboard:indicaciones", icon: "git-branch", name: "Indicaciones", href: "/dashboard#indicaciones", module: "reporteria" },
+  "dashboard:onboarding": { id: "dashboard:onboarding", icon: "user-plus", name: "Onboarding", href: "/dashboard#onboarding", module: "reporteria" },
+  "dashboard:estado-cuenta": { id: "dashboard:estado-cuenta", icon: "coins", name: "Estado de cuenta", href: "/dashboard#cuenta", module: "reporteria" },
+  "dashboard:mix-productos": { id: "dashboard:mix-productos", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix", primary: true, module: "reporteria" },
+  "dashboard:cobertura": { id: "dashboard:cobertura", icon: "map-pin", name: "Cobertura", href: "/dashboard#cobertura", module: "reporteria" },
+  "dashboard:alertas": { id: "dashboard:alertas", icon: "bell", name: "Centro de alertas", href: "/dashboard#alertas", module: "reporteria" },
+  "dashboard:reportes": { id: "dashboard:reportes", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes", module: "reporteria" },
+  "dashboard:objetivos": { id: "dashboard:objetivos", icon: "target", name: "Config. objetivos", href: "/dashboard#objetivos", module: "reporteria" },
+  "dashboard:tendencia": { id: "dashboard:tendencia", icon: "activity", name: "Tendencia", href: "/dashboard#tendencia", primary: true, module: "reporteria" },
+  "dashboard:plan-bi": { id: "dashboard:plan-bi", icon: "clipboard-list", name: "Plan comercial BI", href: "/dashboard#plan", module: "reporteria" },
+
+  // ---- ops (back-office / atención) ----
+  "ops:reclamos": { id: "ops:reclamos", icon: "refresh-ccw", name: "Gestión de reclamos", href: "/atencion#reclamos", primary: true, module: "returns" },
+  "ops:tickets": { id: "ops:tickets", icon: "ticket", name: "Tickets", href: "/atencion", primary: true, module: "crm" },
+  "ops:pedidos": { id: "ops:pedidos", icon: "package", name: "Pedidos", href: "/atencion#pedidos", module: "commerce" },
+  "ops:facturas": { id: "ops:facturas", icon: "file-text", name: "Facturas", href: "/atencion#facturas", module: "commerce" },
+  "ops:boletas": { id: "ops:boletas", icon: "receipt", name: "Boletas de pago", href: "/atencion#boletas", module: "commerce" },
+
+  // ---- sat (CRM / app de pedidos) ----
+  "sat:crm": { id: "sat:crm", icon: "user-search", name: "CRM Contactos", href: "/atencion#crm", primary: true, module: "crm" },
+  "sat:pedidos-app": { id: "sat:pedidos-app", icon: "smartphone", name: "Pedidos App", href: "/atencion#pedidos-app", module: "commerce" },
+
+  // ---- red (líderes / LCI) → módulo sales_force ----
+  "red:dashboard-lideres": { id: "red:dashboard-lideres", icon: "layout-dashboard", name: "Dashboard líderes", href: "/home#lideres", module: "sales_force" },
+  "red:performance-campania": { id: "red:performance-campania", icon: "bar-chart-3", name: "Campaña", href: "/home#campana", primary: true, module: "sales_force" },
+  "red:mi-red": { id: "red:mi-red", icon: "users", name: "Mi red", href: "/home#red", primary: true, module: "sales_force" },
+  "red:detalle-revendedora": { id: "red:detalle-revendedora", icon: "user-search", name: "Detalle revendedora", href: "/home#revendedora", module: "sales_force" },
+  "red:pedido-woe": { id: "red:pedido-woe", icon: "package", name: "Pedido WOE", href: "/home#pedido-woe", module: "sales_force" },
+  "red:simulador-titulos": { id: "red:simulador-titulos", icon: "calculator", name: "Simulador de títulos", href: "/home#simulador", module: "sales_force" },
+  "red:bonificacion": { id: "red:bonificacion", icon: "wallet", name: "Bonificación", href: "/home#bonificacion", primary: true, module: "sales_force" },
+  "red:plan-lucero": { id: "red:plan-lucero", icon: "star", name: "Plan Lucero", href: "/home#plan-lucero", module: "sales_force" },
+  "red:reportes-lider": { id: "red:reportes-lider", icon: "file-text", name: "Reportes de líder", href: "/home#reportes-lider", module: "sales_force" },
+
+  // ---- emp (emprendedora) → commerce, salvo reclamos (returns) ----
+  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Catálogo", href: "/home#catalogo", primary: true, module: "commerce" },
+  "emp:mis-pedidos": { id: "emp:mis-pedidos", icon: "package", name: "Pedidos", href: "/home#pedidos", primary: true, module: "commerce" },
+  "emp:mi-cuenta": { id: "emp:mi-cuenta", icon: "wallet", name: "Cuenta", href: "/home#cuenta", primary: true, module: "commerce" },
+  "emp:mis-reclamos": { id: "emp:mis-reclamos", icon: "refresh-ccw", name: "Cambios y reclamos", href: "/home#reclamos", desc: "Crear o consultar", tint: TINT.amber, module: "returns" },
+  "emp:mis-facturas": { id: "emp:mis-facturas", icon: "file-text", name: "Mis facturas", href: "/home#facturas", desc: "Consultar facturas emitidas", tint: TINT.blue, module: "commerce" },
+  "emp:mis-boletas": { id: "emp:mis-boletas", icon: "receipt", name: "Boletas de pago", href: "/home#boletas", desc: "Ver boletas y vencimientos", tint: TINT.green, module: "commerce" },
+
+  // ---- shared (transversales; en mobile caen al sheet "Más") ----
+  "shared:academia": { id: "shared:academia", icon: "graduation-cap", name: "Academia", href: "/academia", desc: "Cursos y materiales", tint: TINT.violet, module: "lms" },
+  "shared:ai-agent": { id: "shared:ai-agent", icon: "bot", name: "Asistente IA", href: "/asistente", desc: "Ayuda inteligente", tint: TINT.violet, module: "ai_agent" },
+  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones", module: "mensajeria" },
+  "shared:perfil": { id: "shared:perfil", icon: "user", name: "Mi perfil", href: "/perfil", desc: "Datos personales y configuración", tint: TINT.neutral },
 };
 
-export function desktopNavForRole(raw: string | undefined | null): NavEntry[] {
-  const role = normalizeRole(raw);
-  if (role === "lci" || role === "emprendedor") return NAV_GERENTE; // no debería ocurrir
-  return DESKTOP_NAV_BY_ROLE[role];
+/**
+ * Orden de render del menú (del código, NO de la base). El menú de un rol es el
+ * catálogo filtrado por sus claves permitidas y ordenado por este array. Los
+ * `primary` que queden en las primeras 4 posiciones del rol van a bottom-tabs.
+ */
+export const SECTION_ORDER: string[] = [
+  "shared:inicio",
+  // admin
+  "admin:panel", "admin:usuarios", "admin:organizaciones", "admin:permisos", "admin:modulos", "admin:campanas",
+  // dashboard
+  "dashboard:360", "dashboard:fuerza-ventas", "dashboard:performance", "dashboard:top-performers",
+  "dashboard:indicaciones", "dashboard:onboarding", "dashboard:estado-cuenta", "dashboard:mix-productos",
+  "dashboard:cobertura", "dashboard:alertas", "dashboard:reportes", "dashboard:objetivos",
+  "dashboard:tendencia", "dashboard:plan-bi",
+  // ops
+  "ops:reclamos", "ops:tickets", "ops:pedidos", "ops:facturas", "ops:boletas",
+  // sat
+  "sat:crm", "sat:pedidos-app",
+  // red
+  "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
+  "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero", "red:reportes-lider",
+  // emp
+  "emp:catalogo", "emp:mis-pedidos", "emp:mi-cuenta", "emp:mis-reclamos", "emp:mis-facturas", "emp:mis-boletas",
+  // shared (resto)
+  "shared:academia", "shared:ai-agent", "shared:notificaciones", "shared:perfil",
+];
+
+const ORDER_INDEX: Record<string, number> = Object.fromEntries(SECTION_ORDER.map((k, i) => [k, i]));
+
+/**
+ * Stand-in estático de la matriz `01_auth_role_permissions`: qué claves ve cada
+ * rol. El Commit B lo reemplaza por una lectura de la base (allowed=true). El
+ * ORDEN acá no importa: el render ordena por SECTION_ORDER.
+ */
+const COMERCIAL_KEYS = [
+  "dashboard:360", "dashboard:fuerza-ventas", "dashboard:performance", "dashboard:top-performers",
+  "dashboard:mix-productos", "dashboard:cobertura", "dashboard:reportes", "dashboard:tendencia",
+  "dashboard:plan-bi", "sat:crm", "shared:academia",
+];
+
+export const ROLE_RESOURCE_KEYS: Record<Role, string[]> = {
+  admin: [
+    "admin:panel", "admin:usuarios", "admin:organizaciones", "admin:permisos", "admin:modulos",
+    "admin:campanas", "dashboard:objetivos", "dashboard:360", "dashboard:reportes", "shared:academia",
+  ],
+  gerente_comercial: [
+    "dashboard:360", "dashboard:fuerza-ventas", "dashboard:performance", "dashboard:top-performers",
+    "ops:reclamos", "dashboard:indicaciones", "dashboard:onboarding", "dashboard:estado-cuenta",
+    "dashboard:mix-productos", "dashboard:cobertura", "dashboard:alertas", "dashboard:reportes",
+    "dashboard:objetivos", "dashboard:tendencia", "dashboard:plan-bi", "shared:academia", "ops:tickets",
+  ],
+  atencion_cliente: ["ops:tickets", "ops:reclamos", "sat:crm", "dashboard:fuerza-ventas", "shared:academia"],
+  comercial: COMERCIAL_KEYS,
+  marketing: [
+    "dashboard:360", "dashboard:performance", "dashboard:mix-productos", "dashboard:tendencia",
+    "dashboard:plan-bi", "dashboard:reportes", "sat:crm", "shared:academia",
+  ],
+  // Back-office sin nav dedicada todavía → vista comercial.
+  cuentas_corrientes: COMERCIAL_KEYS,
+  administracion: COMERCIAL_KEYS,
+  deposito: COMERCIAL_KEYS,
+  lci: [
+    "shared:inicio", "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
+    "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero",
+    "red:reportes-lider", "shared:academia", "shared:ai-agent", "shared:perfil",
+  ],
+  emprendedor: [
+    "shared:inicio", "emp:catalogo", "emp:mis-pedidos", "emp:mi-cuenta", "emp:mis-reclamos",
+    "emp:mis-facturas", "emp:mis-boletas", "shared:academia", "shared:ai-agent", "shared:perfil",
+  ],
+};
+
+// ============================================================
+//  Selectores de menú a partir de claves permitidas.
+// ============================================================
+
+/** Mapea claves permitidas → Sections del catálogo, ordenadas por SECTION_ORDER. */
+export function sectionsFromKeys(keys: Iterable<string>): Section[] {
+  const seen = new Set<string>();
+  const out: Section[] = [];
+  for (const k of keys) {
+    if (seen.has(k)) continue;
+    const s = SECTION_CATALOG[k];
+    if (s) {
+      seen.add(k);
+      out.push(s);
+    }
+  }
+  return out.sort((a, b) => (ORDER_INDEX[a.id] ?? 9999) - (ORDER_INDEX[b.id] ?? 9999));
+}
+
+/** Las 4 primeras secciones `primary` (bottom-tabs en <768px). */
+export function tabsFromSections(sections: Section[]): Section[] {
+  return sections.filter((s) => s.primary).slice(0, 4);
+}
+
+/** El resto de secciones (las que no son tab): van al sheet "Más" en <768px. */
+export function extrasFromSections(sections: Section[]): Section[] {
+  const tabIds = new Set(tabsFromSections(sections).map((s) => s.id));
+  return sections.filter((s) => !tabIds.has(s.id));
+}
+
+// ---- API por rol (stand-in estático; Commit B añade la variante async DB) ----
+
+/** Lista completa de secciones del rol (para el sidebar). */
+export function navForRole(raw: string | undefined | null): Section[] {
+  return sectionsFromKeys(ROLE_RESOURCE_KEYS[normalizeRole(raw)]);
+}
+
+/** Secciones `primary` (máx. 4) que se muestran como bottom-tabs en mobile. */
+export function tabsForRole(raw: string | undefined | null): Section[] {
+  return tabsFromSections(navForRole(raw));
+}
+
+/** Resto de secciones (no-tab) que se muestran en el sheet "Más" en mobile. */
+export function extraSectionsForRole(raw: string | undefined | null): Section[] {
+  return extrasFromSections(navForRole(raw));
 }
 
 /** Filtros globales del topbar desktop (handoff). */
 export const DESKTOP_FILTERS = ["Campaña 202608", "División Zeus", "Canal: Consolidado", "Todas las zonas"];
-
-// ============================================================
-//  NAV — Mobile (bottom tabs). icon = nombre lucide.
-// ============================================================
-export interface Tab {
-  id: string;
-  icon: string;
-  label: string;
-  href: string;
-}
-
-const TABS_EMPRENDEDOR: Tab[] = [
-  { id: "home", icon: "home", label: "Inicio", href: "/home" },
-  { id: "cat", icon: "shopping-bag", label: "Catálogo", href: "/home#catalogo" },
-  { id: "ord", icon: "package", label: "Pedidos", href: "/home#pedidos" },
-  { id: "acc", icon: "wallet", label: "Cuenta", href: "/home#cuenta" },
-  { id: "more", icon: "menu", label: "Más", href: "/mas" },
-];
-
-const TABS_LCI: Tab[] = [
-  { id: "home", icon: "home", label: "Inicio", href: "/home" },
-  { id: "camp", icon: "bar-chart-3", label: "Campaña", href: "/home#campana" },
-  { id: "red", icon: "users", label: "Mi red", href: "/home#red" },
-  { id: "bon", icon: "wallet", label: "Bonific.", href: "/home#bonificacion" },
-  { id: "more", icon: "menu", label: "Más", href: "/mas" },
-];
-
-export function mobileTabsForRole(raw: string | undefined | null): Tab[] {
-  return normalizeRole(raw) === "lci" ? TABS_LCI : TABS_EMPRENDEDOR;
-}
