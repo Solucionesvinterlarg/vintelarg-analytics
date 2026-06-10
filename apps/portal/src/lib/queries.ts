@@ -352,25 +352,49 @@ export async function getAllowedResources(roleKey: string, orgId: string): Promi
   return rows.map((r) => r.resource).filter((x): x is string => !!x);
 }
 
+/** Module_keys con active=true para la org (cascada de módulos del menú). */
+export async function getActiveModules(orgId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ key: organizationModules.moduleKey })
+    .from(organizationModules)
+    .where(and(eq(organizationModules.organizationId, orgId), eq(organizationModules.active, true)));
+  return new Set(rows.map((r) => r.key).filter((k): k is string => !!k));
+}
+
 /**
- * Menú del usuario: catálogo filtrado por las claves permitidas en la base y
- * ordenado por SECTION_ORDER (orden del código). Fallback seguro: si la query
- * falla o no devuelve nada, NO rompe el layout — devuelve un menú mínimo.
+ * Menú del usuario en dos capas:
+ *  1) permisos — catálogo filtrado por las claves con allowed=true del rol,
+ *     ordenado por SECTION_ORDER.
+ *  2) cascada de módulos — un ítem con `module` solo pasa si ese módulo está
+ *     activo para la org; el módulo manda sobre el permiso.
+ * Fallbacks seguros e independientes: si fallan los permisos → menú mínimo; si
+ * falla la query de módulos → NO se filtra por cascada (mostrar todo, nunca
+ * pelar el menú). `shared:inicio` se inyecta para la red comercial (landing).
  */
 export async function getNavForUser(roleKey: string, orgId: string): Promise<Section[]> {
+  let sections: Section[];
   try {
     const allowed = await getAllowedResources(roleKey, orgId);
-    // `shared:inicio` no se permisa en la base: la red comercial siempre tiene
-    // landing, así que se inyecta cuando el rol aterriza en /home.
     const keys = landingForRole(roleKey) === "/home" ? ["shared:inicio", ...allowed] : allowed;
-    const sections = sectionsFromKeys(keys);
+    sections = sectionsFromKeys(keys);
     if (sections.length === 0) {
       console.error(`[portal] getNavForUser: sin secciones (role=${roleKey} org=${orgId}); menú mínimo`);
       return sectionsFromKeys(MIN_NAV_KEYS);
     }
-    return sections;
   } catch (err) {
     console.error(`[portal] getNavForUser falló (role=${roleKey} org=${orgId}):`, err);
     return sectionsFromKeys(MIN_NAV_KEYS);
   }
+
+  // Cascada de módulos. null = no se pudo determinar (error) → no se filtra;
+  // un Set vacío legítimo SÍ filtra (la org no tiene módulos activos).
+  let activeModules: Set<string> | null = null;
+  try {
+    activeModules = await getActiveModules(orgId);
+  } catch (err) {
+    console.error(`[portal] getActiveModules falló (org=${orgId}); sin cascada de módulos:`, err);
+  }
+  if (!activeModules) return sections;
+  const active = activeModules;
+  return sections.filter((s) => !s.module || active.has(s.module));
 }

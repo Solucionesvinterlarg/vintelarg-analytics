@@ -118,6 +118,13 @@ export interface Section {
   desc?: string;
   /** Tinte del ícono en el sheet "Más" (P03). */
   tint?: { bg: string; fg: string };
+  /**
+   * Módulo del ecosistema (`01_auth_organization_modules.module_key`) al que
+   * pertenece el ítem. Si el módulo está inactivo para la org, el ítem se
+   * oculta del menú aunque el permiso esté en true (cascada de módulos). Sin
+   * `module` = siempre disponible (no se filtra por cascada).
+   */
+  module?: string;
 }
 
 /** Entrada del sidebar: una sección o un separador/título visual. */
@@ -154,56 +161,56 @@ export const SECTION_CATALOG: Record<string, Section> = {
   "admin:modulos": { id: "admin:modulos", icon: "puzzle", name: "Módulos habilitados", href: "/admin/modulos" },
   "admin:campanas": { id: "admin:campanas", icon: "settings", name: "Config. campañas", href: "/admin#campanas" },
 
-  // ---- dashboard (interno) ----
-  "dashboard:360": { id: "dashboard:360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard", primary: true },
-  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza", primary: true },
-  "dashboard:performance": { id: "dashboard:performance", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance", primary: true },
-  "dashboard:top-performers": { id: "dashboard:top-performers", icon: "trophy", name: "Top performers", href: "/dashboard#top", primary: true },
-  "dashboard:indicaciones": { id: "dashboard:indicaciones", icon: "git-branch", name: "Indicaciones", href: "/dashboard#indicaciones" },
-  "dashboard:onboarding": { id: "dashboard:onboarding", icon: "user-plus", name: "Onboarding", href: "/dashboard#onboarding" },
-  "dashboard:estado-cuenta": { id: "dashboard:estado-cuenta", icon: "coins", name: "Estado de cuenta", href: "/dashboard#cuenta" },
-  "dashboard:mix-productos": { id: "dashboard:mix-productos", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix", primary: true },
-  "dashboard:cobertura": { id: "dashboard:cobertura", icon: "map-pin", name: "Cobertura", href: "/dashboard#cobertura" },
-  "dashboard:alertas": { id: "dashboard:alertas", icon: "bell", name: "Centro de alertas", href: "/dashboard#alertas" },
-  "dashboard:reportes": { id: "dashboard:reportes", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes" },
-  "dashboard:objetivos": { id: "dashboard:objetivos", icon: "target", name: "Config. objetivos", href: "/dashboard#objetivos" },
-  "dashboard:tendencia": { id: "dashboard:tendencia", icon: "activity", name: "Tendencia", href: "/dashboard#tendencia", primary: true },
-  "dashboard:plan-bi": { id: "dashboard:plan-bi", icon: "clipboard-list", name: "Plan comercial BI", href: "/dashboard#plan" },
+  // ---- dashboard (interno) → módulo reporteria ----
+  "dashboard:360": { id: "dashboard:360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard", primary: true, module: "reporteria" },
+  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza", primary: true, module: "reporteria" },
+  "dashboard:performance": { id: "dashboard:performance", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance", primary: true, module: "reporteria" },
+  "dashboard:top-performers": { id: "dashboard:top-performers", icon: "trophy", name: "Top performers", href: "/dashboard#top", primary: true, module: "reporteria" },
+  "dashboard:indicaciones": { id: "dashboard:indicaciones", icon: "git-branch", name: "Indicaciones", href: "/dashboard#indicaciones", module: "reporteria" },
+  "dashboard:onboarding": { id: "dashboard:onboarding", icon: "user-plus", name: "Onboarding", href: "/dashboard#onboarding", module: "reporteria" },
+  "dashboard:estado-cuenta": { id: "dashboard:estado-cuenta", icon: "coins", name: "Estado de cuenta", href: "/dashboard#cuenta", module: "reporteria" },
+  "dashboard:mix-productos": { id: "dashboard:mix-productos", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix", primary: true, module: "reporteria" },
+  "dashboard:cobertura": { id: "dashboard:cobertura", icon: "map-pin", name: "Cobertura", href: "/dashboard#cobertura", module: "reporteria" },
+  "dashboard:alertas": { id: "dashboard:alertas", icon: "bell", name: "Centro de alertas", href: "/dashboard#alertas", module: "reporteria" },
+  "dashboard:reportes": { id: "dashboard:reportes", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes", module: "reporteria" },
+  "dashboard:objetivos": { id: "dashboard:objetivos", icon: "target", name: "Config. objetivos", href: "/dashboard#objetivos", module: "reporteria" },
+  "dashboard:tendencia": { id: "dashboard:tendencia", icon: "activity", name: "Tendencia", href: "/dashboard#tendencia", primary: true, module: "reporteria" },
+  "dashboard:plan-bi": { id: "dashboard:plan-bi", icon: "clipboard-list", name: "Plan comercial BI", href: "/dashboard#plan", module: "reporteria" },
 
   // ---- ops (back-office / atención) ----
-  "ops:reclamos": { id: "ops:reclamos", icon: "refresh-ccw", name: "Gestión de reclamos", href: "/atencion#reclamos", primary: true },
-  "ops:tickets": { id: "ops:tickets", icon: "ticket", name: "Tickets", href: "/atencion", primary: true },
-  "ops:pedidos": { id: "ops:pedidos", icon: "package", name: "Pedidos", href: "/atencion#pedidos" },
-  "ops:facturas": { id: "ops:facturas", icon: "file-text", name: "Facturas", href: "/atencion#facturas" },
-  "ops:boletas": { id: "ops:boletas", icon: "receipt", name: "Boletas de pago", href: "/atencion#boletas" },
+  "ops:reclamos": { id: "ops:reclamos", icon: "refresh-ccw", name: "Gestión de reclamos", href: "/atencion#reclamos", primary: true, module: "returns" },
+  "ops:tickets": { id: "ops:tickets", icon: "ticket", name: "Tickets", href: "/atencion", primary: true, module: "crm" },
+  "ops:pedidos": { id: "ops:pedidos", icon: "package", name: "Pedidos", href: "/atencion#pedidos", module: "commerce" },
+  "ops:facturas": { id: "ops:facturas", icon: "file-text", name: "Facturas", href: "/atencion#facturas", module: "commerce" },
+  "ops:boletas": { id: "ops:boletas", icon: "receipt", name: "Boletas de pago", href: "/atencion#boletas", module: "commerce" },
 
   // ---- sat (CRM / app de pedidos) ----
-  "sat:crm": { id: "sat:crm", icon: "user-search", name: "CRM Contactos", href: "/atencion#crm", primary: true },
-  "sat:pedidos-app": { id: "sat:pedidos-app", icon: "smartphone", name: "Pedidos App", href: "/atencion#pedidos-app" },
+  "sat:crm": { id: "sat:crm", icon: "user-search", name: "CRM Contactos", href: "/atencion#crm", primary: true, module: "crm" },
+  "sat:pedidos-app": { id: "sat:pedidos-app", icon: "smartphone", name: "Pedidos App", href: "/atencion#pedidos-app", module: "commerce" },
 
-  // ---- red (líderes / LCI) ----
-  "red:dashboard-lideres": { id: "red:dashboard-lideres", icon: "layout-dashboard", name: "Dashboard líderes", href: "/home#lideres" },
-  "red:performance-campania": { id: "red:performance-campania", icon: "bar-chart-3", name: "Campaña", href: "/home#campana", primary: true },
-  "red:mi-red": { id: "red:mi-red", icon: "users", name: "Mi red", href: "/home#red", primary: true },
-  "red:detalle-revendedora": { id: "red:detalle-revendedora", icon: "user-search", name: "Detalle revendedora", href: "/home#revendedora" },
-  "red:pedido-woe": { id: "red:pedido-woe", icon: "package", name: "Pedido WOE", href: "/home#pedido-woe" },
-  "red:simulador-titulos": { id: "red:simulador-titulos", icon: "calculator", name: "Simulador de títulos", href: "/home#simulador" },
-  "red:bonificacion": { id: "red:bonificacion", icon: "wallet", name: "Bonificación", href: "/home#bonificacion", primary: true },
-  "red:plan-lucero": { id: "red:plan-lucero", icon: "star", name: "Plan Lucero", href: "/home#plan-lucero" },
-  "red:reportes-lider": { id: "red:reportes-lider", icon: "file-text", name: "Reportes de líder", href: "/home#reportes-lider" },
+  // ---- red (líderes / LCI) → módulo sales_force ----
+  "red:dashboard-lideres": { id: "red:dashboard-lideres", icon: "layout-dashboard", name: "Dashboard líderes", href: "/home#lideres", module: "sales_force" },
+  "red:performance-campania": { id: "red:performance-campania", icon: "bar-chart-3", name: "Campaña", href: "/home#campana", primary: true, module: "sales_force" },
+  "red:mi-red": { id: "red:mi-red", icon: "users", name: "Mi red", href: "/home#red", primary: true, module: "sales_force" },
+  "red:detalle-revendedora": { id: "red:detalle-revendedora", icon: "user-search", name: "Detalle revendedora", href: "/home#revendedora", module: "sales_force" },
+  "red:pedido-woe": { id: "red:pedido-woe", icon: "package", name: "Pedido WOE", href: "/home#pedido-woe", module: "sales_force" },
+  "red:simulador-titulos": { id: "red:simulador-titulos", icon: "calculator", name: "Simulador de títulos", href: "/home#simulador", module: "sales_force" },
+  "red:bonificacion": { id: "red:bonificacion", icon: "wallet", name: "Bonificación", href: "/home#bonificacion", primary: true, module: "sales_force" },
+  "red:plan-lucero": { id: "red:plan-lucero", icon: "star", name: "Plan Lucero", href: "/home#plan-lucero", module: "sales_force" },
+  "red:reportes-lider": { id: "red:reportes-lider", icon: "file-text", name: "Reportes de líder", href: "/home#reportes-lider", module: "sales_force" },
 
-  // ---- emp (emprendedora) ----
-  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Catálogo", href: "/home#catalogo", primary: true },
-  "emp:mis-pedidos": { id: "emp:mis-pedidos", icon: "package", name: "Pedidos", href: "/home#pedidos", primary: true },
-  "emp:mi-cuenta": { id: "emp:mi-cuenta", icon: "wallet", name: "Cuenta", href: "/home#cuenta", primary: true },
-  "emp:mis-reclamos": { id: "emp:mis-reclamos", icon: "refresh-ccw", name: "Cambios y reclamos", href: "/home#reclamos", desc: "Crear o consultar", tint: TINT.amber },
-  "emp:mis-facturas": { id: "emp:mis-facturas", icon: "file-text", name: "Mis facturas", href: "/home#facturas", desc: "Consultar facturas emitidas", tint: TINT.blue },
-  "emp:mis-boletas": { id: "emp:mis-boletas", icon: "receipt", name: "Boletas de pago", href: "/home#boletas", desc: "Ver boletas y vencimientos", tint: TINT.green },
+  // ---- emp (emprendedora) → commerce, salvo reclamos (returns) ----
+  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Catálogo", href: "/home#catalogo", primary: true, module: "commerce" },
+  "emp:mis-pedidos": { id: "emp:mis-pedidos", icon: "package", name: "Pedidos", href: "/home#pedidos", primary: true, module: "commerce" },
+  "emp:mi-cuenta": { id: "emp:mi-cuenta", icon: "wallet", name: "Cuenta", href: "/home#cuenta", primary: true, module: "commerce" },
+  "emp:mis-reclamos": { id: "emp:mis-reclamos", icon: "refresh-ccw", name: "Cambios y reclamos", href: "/home#reclamos", desc: "Crear o consultar", tint: TINT.amber, module: "returns" },
+  "emp:mis-facturas": { id: "emp:mis-facturas", icon: "file-text", name: "Mis facturas", href: "/home#facturas", desc: "Consultar facturas emitidas", tint: TINT.blue, module: "commerce" },
+  "emp:mis-boletas": { id: "emp:mis-boletas", icon: "receipt", name: "Boletas de pago", href: "/home#boletas", desc: "Ver boletas y vencimientos", tint: TINT.green, module: "commerce" },
 
   // ---- shared (transversales; en mobile caen al sheet "Más") ----
-  "shared:academia": { id: "shared:academia", icon: "graduation-cap", name: "Academia", href: "/academia", desc: "Cursos y materiales", tint: TINT.violet },
-  "shared:ai-agent": { id: "shared:ai-agent", icon: "bot", name: "Asistente IA", href: "/asistente", desc: "Ayuda inteligente", tint: TINT.violet },
-  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones" },
+  "shared:academia": { id: "shared:academia", icon: "graduation-cap", name: "Academia", href: "/academia", desc: "Cursos y materiales", tint: TINT.violet, module: "lms" },
+  "shared:ai-agent": { id: "shared:ai-agent", icon: "bot", name: "Asistente IA", href: "/asistente", desc: "Ayuda inteligente", tint: TINT.violet, module: "ai_agent" },
+  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones", module: "mensajeria" },
   "shared:perfil": { id: "shared:perfil", icon: "user", name: "Mi perfil", href: "/perfil", desc: "Datos personales y configuración", tint: TINT.neutral },
 };
 
