@@ -5,7 +5,7 @@
 import "server-only";
 import { db } from "./db";
 import { alias } from "drizzle-orm/pg-core";
-import { and, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
 import {
   tickets,
   ticketReasons,
@@ -16,6 +16,7 @@ import {
   authEvents,
   roleDefinitions,
   rolePermissions,
+  organizationModules,
   campanias,
 } from "./schema";
 import type { BadgeTone } from "@/components/portal/badge";
@@ -269,6 +270,27 @@ export async function getPermissionMatrix(): Promise<PermissionMatrix> {
     roles: roles.map((r) => ({ id: r.id, name: r.name ?? r.id, userType: r.userType })),
     groups,
   };
+}
+
+// ---------- P10 Módulos: módulos activos de la organización (solo lectura) ----------
+export interface OrgModule {
+  moduleKey: string;
+  moduleType: string;
+  active: boolean;
+}
+
+/** Módulos registrados para la org (negocio + infra), ordenados por tipo y key. */
+export async function getOrganizationModules(orgId: string): Promise<OrgModule[]> {
+  const rows = await db
+    .select({
+      moduleKey: organizationModules.moduleKey,
+      moduleType: organizationModules.moduleType,
+      active: organizationModules.active,
+    })
+    .from(organizationModules)
+    .where(eq(organizationModules.organizationId, orgId))
+    .orderBy(asc(organizationModules.moduleType), asc(organizationModules.moduleKey));
+  return rows.map((r) => ({ moduleKey: r.moduleKey ?? "", moduleType: r.moduleType ?? "", active: !!r.active }));
 }
 
 // ---------- P11 Permisos: grilla editable (catálogo × roles) ----------

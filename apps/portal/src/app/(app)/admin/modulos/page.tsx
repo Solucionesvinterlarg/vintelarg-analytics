@@ -1,142 +1,150 @@
-"use client";
-
-import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
-  Wallet,
-  User,
-  ShoppingBag,
-  Tag,
-  RefreshCcw,
-  FileText,
-  Receipt,
-  GraduationCap,
-  Bot,
-  Bell,
-  MessageCircle,
-  Info,
+  Puzzle, ShieldX, Lock,
+  Headset, ShoppingCart, Users, BarChart3, Bot, LayoutTemplate, GraduationCap, Truck, MessageSquare, Undo2,
+  ShieldCheck, Coins, Box, HardDrive, Settings, Search,
 } from "lucide-react";
 import { DesktopTopBar } from "@/components/shells/desktop-topbar";
 import { PortalBadge } from "@/components/portal/badge";
-import { Toggle } from "@/components/portal/toggle";
-import { MODULOS } from "@/lib/mock/modulos";
+import { getOrganizationModules, type OrgModule } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/session";
+import { normalizeRole } from "@/lib/portal-config";
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  wallet: Wallet,
-  user: User,
-  "shopping-bag": ShoppingBag,
-  tag: Tag,
-  "refresh-ccw": RefreshCcw,
-  "file-text": FileText,
-  receipt: Receipt,
-  "graduation-cap": GraduationCap,
-  bot: Bot,
-  bell: Bell,
-  "message-circle": MessageCircle,
+export const dynamic = "force-dynamic";
+
+/** Presentación de cada módulo del ecosistema (label legible + ícono lucide). */
+const MODULES: Record<string, { label: string; Icon: LucideIcon }> = {
+  // negocio
+  crm: { label: "CRM", Icon: Headset },
+  commerce: { label: "Pedidos", Icon: ShoppingCart },
+  sales_force: { label: "Fuerza de Venta", Icon: Users },
+  reporteria: { label: "Reportería", Icon: BarChart3 },
+  ai_agent: { label: "Agente IA", Icon: Bot },
+  cms: { label: "CMS / Contenidos", Icon: LayoutTemplate },
+  lms: { label: "Academia (LMS)", Icon: GraduationCap },
+  logistica: { label: "Logística", Icon: Truck },
+  mensajeria: { label: "Mensajería", Icon: MessageSquare },
+  returns: { label: "Cambios y Reclamos", Icon: Undo2 },
+  // infra
+  auth: { label: "Autenticación", Icon: ShieldCheck },
+  commission_worker: { label: "Motor de Comisiones", Icon: Coins },
+  cubicaje: { label: "Cubicaje", Icon: Box },
+  minio: { label: "Almacenamiento", Icon: HardDrive },
+  operations: { label: "Operaciones", Icon: Settings },
+  rag: { label: "Búsqueda IA (RAG)", Icon: Search },
 };
 
-export default function ModulosPage() {
-  const [state, setState] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(MODULOS.map((m) => [m.key, m.defaultOn]))
-  );
+function present(moduleKey: string) {
+  return MODULES[moduleKey] ?? { label: moduleKey.replace(/_/g, " "), Icon: Puzzle };
+}
 
-  const activos = Object.values(state).filter(Boolean).length;
-  const total = MODULOS.length;
-
-  function toggle(key: string) {
-    setState((prev) => ({ ...prev, [key]: !prev[key] }));
+export default async function ModulosPage() {
+  // Doble guarda: el layout autentica, pero esta pantalla es admin-only.
+  const user = await getCurrentUser();
+  if (!user || normalizeRole(user.role) !== "admin") {
+    return (
+      <>
+        <DesktopTopBar title="Módulos habilitados" initials="DA" />
+        <Forbidden />
+      </>
+    );
   }
+
+  const modules = await getOrganizationModules(user.orgId);
+  const negocio = modules.filter((m) => m.moduleType === "negocio");
+  const infra = modules.filter((m) => m.moduleType === "infra");
 
   return (
     <>
-      <DesktopTopBar
-        title="Módulos del sistema"
-        right={
-          <PortalBadge tone="violet">
-            {activos} de {total} activos
-          </PortalBadge>
-        }
-      />
+      <DesktopTopBar title="Módulos habilitados" initials="DA" />
+      {modules.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-3.5">
+          {/* Nota de solo lectura */}
+          <div className="mb-5 flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "var(--aw-violet-light)", border: "0.5px solid var(--aw-hairline)" }}>
+            <Lock size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" style={{ color: "var(--aw-violet)" }} />
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              <span className="font-semibold text-foreground">Vista de solo lectura.</span> La activación de módulos
+              la gestiona Vintelarg como parte del plan de tu organización. Desde acá podés ver qué módulos tenés y
+              su estado, pero no se editan desde el portal.
+            </p>
+          </div>
 
-      {/* Intro */}
-      <div className="px-6 pb-2 pt-5">
-        <p
-          className="m-0 max-w-[780px] text-[13px] leading-[1.5]"
-          style={{ color: "var(--fg-muted)" }}
-        >
-          Los módulos habilitados estarán disponibles para todos los perfiles según sus permisos.
-          Los módulos deshabilitados no se muestran en ninguna pantalla.
+          <ModuleSection title="Módulos de negocio" modules={negocio} />
+          <ModuleSection title="Servicios base" modules={infra} />
+        </div>
+      )}
+    </>
+  );
+}
+
+function ModuleSection({ title, modules }: { title: string; modules: OrgModule[] }) {
+  if (modules.length === 0) return null;
+  const activos = modules.filter((m) => m.active).length;
+  return (
+    <section className="mb-6">
+      <div className="mb-2.5 flex items-baseline gap-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--fg-subtle)" }}>{title}</h3>
+        <span className="text-[11px] font-medium text-muted-foreground">· {activos} de {modules.length} activos</span>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {modules.map((m) => (
+          <ModuleCard key={m.moduleKey} mod={m} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ModuleCard({ mod }: { mod: OrgModule }) {
+  const { label, Icon } = present(mod.moduleKey);
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-card px-4 py-3" style={{ border: "0.5px solid var(--aw-hairline)" }}>
+      <div
+        className="grid size-10 shrink-0 place-items-center rounded-xl"
+        style={mod.active ? { background: "var(--aw-violet-light)", color: "var(--aw-violet)" } : { background: "var(--aw-chalk)", color: "var(--aw-stone)" }}
+      >
+        <Icon size={20} strokeWidth={1.5} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-bold text-foreground">{label}</div>
+        <div className="truncate text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>{mod.moduleKey}</div>
+      </div>
+      <PortalBadge tone={mod.active ? "violet" : "neutral"} dot>
+        {mod.active ? "Activo" : "Inactivo"}
+      </PortalBadge>
+    </div>
+  );
+}
+
+function Forbidden() {
+  return (
+    <div className="grid flex-1 place-items-center p-10">
+      <div className="max-w-md text-center">
+        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl" style={{ background: "var(--aw-danger-light)", color: "var(--aw-danger)" }}>
+          <ShieldX size={26} strokeWidth={1.5} />
+        </div>
+        <h2 className="text-lg font-extrabold tracking-tight text-foreground">No tenés acceso a esta sección</h2>
+        <p className="mt-2 text-sm text-muted-foreground">La gestión de módulos por organización es exclusiva del rol <code className="text-xs">admin</code>.</p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="grid flex-1 place-items-center p-10">
+      <div className="max-w-md text-center">
+        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl" style={{ background: "var(--aw-violet-light)", color: "var(--aw-violet)" }}>
+          <Puzzle size={26} strokeWidth={1.5} />
+        </div>
+        <h2 className="text-lg font-extrabold tracking-tight text-foreground">Tu organización no tiene módulos registrados</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Los módulos del ecosistema se asignan a cada organización desde Vintelarg. Cuando se configuren,
+          aparecen acá con su estado.
         </p>
       </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-[14px] px-6 pb-4 pt-3">
-        {MODULOS.map((m) => {
-          const on = state[m.key];
-          const Icon = ICON_MAP[m.icon];
-          return (
-            <div
-              key={m.key}
-              className="flex items-center gap-[14px] rounded-2xl px-[18px] py-4 transition-opacity"
-              style={{
-                background: "#fff",
-                border: "0.5px solid #E8E5F0",
-                borderLeft: on
-                  ? "3px solid var(--aw-success)"
-                  : "3px solid #D9DAE0",
-                opacity: on ? 1 : 0.66,
-              }}
-            >
-              {/* Icon tile */}
-              <div
-                className="flex size-12 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: m.bg, color: m.color }}
-              >
-                {Icon && <Icon size={24} strokeWidth={1.5} />}
-              </div>
-
-              {/* Content */}
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className="text-[15px] font-extrabold"
-                    style={{ letterSpacing: "-0.01em" }}
-                  >
-                    {m.title}
-                  </span>
-                  <PortalBadge tone={m.etapaTone}>{m.etapa}</PortalBadge>
-                </div>
-                <div
-                  className="mt-0.5 text-[12px]"
-                  style={{ color: "var(--fg-subtle)" }}
-                >
-                  {m.desc}
-                </div>
-              </div>
-
-              {/* Toggle */}
-              <Toggle on={on} onToggle={() => toggle(m.key)} />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Footer note */}
-      <div
-        className="mx-6 mb-6 flex items-center gap-[10px] rounded-xl px-4 py-3"
-        style={{ background: "var(--aw-violet-light)" }}
-      >
-        <Info
-          size={18}
-          strokeWidth={1.5}
-          style={{ color: "var(--aw-violet)", flexShrink: 0 }}
-        />
-        <span
-          className="text-[12px]"
-          style={{ color: "var(--aw-violet-ink)" }}
-        >
-          Los cambios se aplican inmediatamente para todos los usuarios de la organización. No es necesario reiniciar.
-        </span>
-      </div>
-    </>
+    </div>
   );
 }

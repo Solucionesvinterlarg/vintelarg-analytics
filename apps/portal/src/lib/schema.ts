@@ -100,6 +100,14 @@ export const rolePermissions = pgTable("01_auth_role_permissions", {
   allowed: boolean("allowed"),
 });
 
+export const organizationModules = pgTable("01_auth_organization_modules", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id"),
+  moduleKey: text("module_key"),
+  moduleType: text("module_type"),
+  active: boolean("active"),
+});
+
 // ---- Ecosistema (JDE) ----
 export const campanias = pgTable("03_campania_campanias", {
   id: integer("id").primaryKey(),
