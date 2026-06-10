@@ -38,6 +38,16 @@ export function relativeTime(d: Date | string | null): string {
   return `hace ${dd} días`;
 }
 
+/** Fecha corta dd/mm/aaaa (es-AR). */
+export function shortDate(d: Date | string | null): string {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return "—";
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${date.getFullYear()}`;
+}
+
 const STATUS: Record<string, { label: string; tone: BadgeTone }> = {
   abierto: { label: "Abierto", tone: "danger" },
   esperando: { label: "Esperando", tone: "warn" },
@@ -330,6 +340,51 @@ export async function getUsers(): Promise<UsersData> {
     orgs: orgRows.map((o) => ({ id: o.id, name: o.name ?? "—" })),
     total: users.length,
   };
+}
+
+// ---------- Admin: Organizaciones (real) ----------
+export interface AdminOrgRow {
+  id: string;
+  name: string;
+  slug: string;
+  users: number;
+  activeModules: number;
+  createdAt: string; // dd/mm/aaaa
+}
+
+/**
+ * Organizaciones del ecosistema con sus contadores (miembros y módulos activos).
+ * Hoy hay 2 reales (A-ware® · Operaciones y la org de prueba). El alta/baja de
+ * orgs la gestiona Vintelarg, no el portal (de ahí el botón deshabilitado en la
+ * UI). Cuentas con subqueries correlacionadas para no traer filas de más.
+ */
+export async function getOrganizations(): Promise<AdminOrgRow[]> {
+  const orgRows = await db
+    .select({ id: organization.id, name: organization.name, slug: organization.slug, createdAt: organization.createdAt })
+    .from(organization)
+    .orderBy(organization.createdAt);
+
+  // Contadores por org (agregados agrupados, no subqueries correlacionadas).
+  const memberCounts = await db
+    .select({ org: member.organizationId, n: sql<number>`count(*)`.mapWith(Number) })
+    .from(member)
+    .groupBy(member.organizationId);
+  const moduleCounts = await db
+    .select({ org: organizationModules.organizationId, n: sql<number>`count(*)`.mapWith(Number) })
+    .from(organizationModules)
+    .where(eq(organizationModules.active, true))
+    .groupBy(organizationModules.organizationId);
+  const usersByOrg = new Map(memberCounts.map((r) => [r.org, r.n]));
+  const modulesByOrg = new Map(moduleCounts.map((r) => [r.org, r.n]));
+
+  return orgRows.map((o) => ({
+    id: o.id,
+    name: o.name ?? "—",
+    slug: o.slug ?? "—",
+    users: usersByOrg.get(o.id) ?? 0,
+    activeModules: modulesByOrg.get(o.id) ?? 0,
+    createdAt: shortDate(o.createdAt),
+  }));
 }
 
 // ---------- P11 Permisos: matriz roles×permisos (real; hoy vacía) ----------
