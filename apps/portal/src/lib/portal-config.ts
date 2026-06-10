@@ -304,6 +304,10 @@ export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> 
     // CRM Contactos de marketing: placeholder del módulo CRM (no el /atencion real).
     "sat:crm": "/dashboard/crm",
   },
+  comercial: {
+    // CRM Contactos de comercial: placeholder del módulo CRM (no el /atencion real).
+    "sat:crm": "/dashboard/crm",
+  },
 };
 
 /**

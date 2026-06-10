@@ -15,6 +15,35 @@ function Semaforo({ tone, size = 10 }: { tone: CobTone; size?: number }) {
   return <span className="inline-block rounded-full" style={{ width: size, height: size, background: TONE_COLOR[tone], boxShadow: `0 0 0 3px color-mix(in srgb, ${TONE_COLOR[tone]} 22%, transparent)` }} />;
 }
 
+/** Placeholder ilustrativo (no geográfico): regiones abstractas + puntos por
+ *  estado de cobertura, atados a los datos mock de las zonas. */
+function MapaPlaceholder() {
+  const pts = [
+    { x: 160, y: 70 }, { x: 300, y: 50 }, { x: 430, y: 92 }, { x: 560, y: 58 },
+    { x: 240, y: 150 }, { x: 405, y: 162 }, { x: 600, y: 150 }, { x: 685, y: 96 },
+  ];
+  return (
+    <div className="overflow-hidden rounded-xl" style={{ background: "var(--aw-app-bg)" }}>
+      <svg viewBox="0 0 800 220" className="block h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa ilustrativo de cobertura">
+        <g fill="var(--aw-violet-light)" stroke="var(--aw-hairline)" strokeWidth="1.5">
+          <path d="M80,40 L260,30 L320,120 L180,170 L70,120 Z" />
+          <path d="M330,30 L520,50 L540,150 L360,165 L322,118 Z" />
+          <path d="M530,45 L720,55 L730,160 L545,150 Z" />
+        </g>
+        {COBERTURA_ZONAS.map((z, i) => {
+          const p = pts[i] ?? { x: 400, y: 110 };
+          return (
+            <g key={z.z}>
+              <circle cx={p.x} cy={p.y} r="13" fill={TONE_COLOR[z.tone]} opacity="0.18" />
+              <circle cx={p.x} cy={p.y} r="6" fill={TONE_COLOR[z.tone]} />
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 export function CoberturaView() {
   return (
     <>
@@ -31,6 +60,17 @@ export function CoberturaView() {
         }
       />
       <p className="px-5 pt-3.5 text-[13px] text-muted-foreground md:px-6">Zonas activas vs potencial · División Zeus</p>
+
+      {/* Mapa de cobertura — placeholder ilustrativo (en prod: mapa real Leaflet/Mapbox). */}
+      <div className="px-5 pt-3.5 md:px-6">
+        <div className="rounded-2xl bg-card p-[18px]" style={{ border: "0.5px solid var(--aw-hairline)" }}>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-[15px] font-bold tracking-[-0.01em]">Mapa de cobertura</h3>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Mapa ilustrativo · datos MOCK</span>
+          </div>
+          <MapaPlaceholder />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 px-5 pb-6 pt-3.5 sm:grid-cols-2 md:px-6 lg:grid-cols-4">
         {COBERTURA_ZONAS.map((z) => (
