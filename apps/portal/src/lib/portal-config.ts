@@ -163,7 +163,7 @@ export const SECTION_CATALOG: Record<string, Section> = {
 
   // ---- dashboard (interno) → módulo reporteria ----
   "dashboard:360": { id: "dashboard:360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard", primary: true, module: "reporteria" },
-  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza", primary: true, module: "reporteria" },
+  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard/fuerza-ventas", primary: true, module: "reporteria" },
   "dashboard:performance": { id: "dashboard:performance", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance", primary: true, module: "reporteria" },
   "dashboard:top-performers": { id: "dashboard:top-performers", icon: "trophy", name: "Top performers", href: "/dashboard#top", primary: true, module: "reporteria" },
   "dashboard:indicaciones": { id: "dashboard:indicaciones", icon: "git-branch", name: "Indicaciones", href: "/dashboard#indicaciones", module: "reporteria" },
