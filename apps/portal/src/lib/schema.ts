@@ -66,6 +66,16 @@ export const organization = pgTable("01_auth_organization", {
   createdAt: timestamp("created_at"),
 });
 
+export const member = pgTable("01_auth_member", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id"),
+  userId: text("user_id"),
+  /** rol del usuario EN la organización (role_key). NO confundir con user.role. */
+  role: text("role"),
+  userType: text("user_type"),
+  createdAt: timestamp("created_at"),
+});
+
 export const session = pgTable("01_auth_session", {
   id: text("id").primaryKey(),
   userId: text("user_id"),

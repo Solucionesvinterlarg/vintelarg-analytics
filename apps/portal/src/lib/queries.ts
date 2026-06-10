@@ -11,6 +11,7 @@ import {
   ticketReasons,
   contacts,
   user,
+  member,
   organization,
   session,
   authEvents,
@@ -230,6 +231,104 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       const meta = EVENT_LABEL[e.type ?? ""] ?? { text: e.type ?? "evento", badge: "Sistema", tone: "neutral" as BadgeTone };
       return { ...meta, when: relativeTime(e.when) };
     }),
+  };
+}
+
+// ---------- Admin: Usuarios (real) ----------
+export interface AdminUserRow {
+  id: string;
+  name: string;
+  email: string;
+  /** rol EN la org (member.role / role_key). Sobre esto opera el filtro de rol. */
+  roleKey: string | null;
+  /** etiqueta legible del rol (role_definitions.display_name). */
+  roleLabel: string;
+  userType: string | null; // "internal" | "external"
+  org: string;
+  orgId: string | null;
+  active: boolean; // !banned
+  lastAccess: string; // texto relativo ("hace 3 días")
+}
+
+export interface UsersData {
+  users: AdminUserRow[];
+  /** Opciones del filtro Rol: salen de role_definitions, NO se hardcodean. */
+  roles: { key: string; label: string; userType: string | null }[];
+  /** Opciones del filtro Organización. */
+  orgs: { id: string; name: string }[];
+  total: number;
+}
+
+/**
+ * Usuarios de la org con su ROL EN LA ORGANIZACIÓN. El vínculo usuario↔org↔rol
+ * vive en `01_auth_member` (member.role = role_key); el rol global `user.role`
+ * NO se usa para esto. La etiqueta del rol sale de role_definitions cruzando por
+ * (role_key, organization_id). Las opciones de filtro (roles, orgs) también son
+ * datos reales, no listas hardcodeadas.
+ */
+export async function getUsers(): Promise<UsersData> {
+  // Opciones de filtro: roles (por role_key, deduplicado) y orgs.
+  const roleRows = await db
+    .select({ key: roleDefinitions.roleKey, label: roleDefinitions.displayName, userType: roleDefinitions.userType })
+    .from(roleDefinitions)
+    .orderBy(roleDefinitions.sortOrder);
+  const rolesByKey = new Map<string, { key: string; label: string; userType: string | null }>();
+  for (const r of roleRows) {
+    if (r.key && !rolesByKey.has(r.key)) rolesByKey.set(r.key, { key: r.key, label: r.label ?? r.key, userType: r.userType });
+  }
+  const orgRows = await db
+    .select({ id: organization.id, name: organization.name })
+    .from(organization)
+    .orderBy(organization.createdAt);
+
+  // Último acceso por usuario (max de session.created_at).
+  const lastRows = await db
+    .select({ uid: session.userId, last: sql<string | null>`max(${session.createdAt})` })
+    .from(session)
+    .groupBy(session.userId);
+  const lastMap = new Map(lastRows.map((r) => [r.uid, r.last]));
+
+  // Usuarios + rol en la org (member) + etiqueta de rol (role_definitions).
+  const rows = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      banned: user.banned,
+      roleKey: member.role,
+      orgId: member.organizationId,
+      orgName: organization.name,
+      roleLabel: roleDefinitions.displayName,
+      defUserType: roleDefinitions.userType,
+      memberUserType: member.userType,
+    })
+    .from(user)
+    .leftJoin(member, eq(member.userId, user.id))
+    .leftJoin(organization, eq(organization.id, member.organizationId))
+    .leftJoin(
+      roleDefinitions,
+      and(eq(roleDefinitions.roleKey, member.role), eq(roleDefinitions.organizationId, member.organizationId))
+    )
+    .orderBy(asc(user.name));
+
+  const users: AdminUserRow[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name ?? "—",
+    email: r.email ?? "—",
+    roleKey: r.roleKey ?? null,
+    roleLabel: r.roleLabel ?? r.roleKey ?? "—",
+    userType: r.defUserType ?? r.memberUserType ?? null,
+    org: r.orgName ?? "—",
+    orgId: r.orgId ?? null,
+    active: !r.banned,
+    lastAccess: relativeTime(lastMap.get(r.id) ?? null),
+  }));
+
+  return {
+    users,
+    roles: [...rolesByKey.values()],
+    orgs: orgRows.map((o) => ({ id: o.id, name: o.name ?? "—" })),
+    total: users.length,
   };
 }
 

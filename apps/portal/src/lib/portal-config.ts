@@ -155,7 +155,7 @@ export const SECTION_CATALOG: Record<string, Section> = {
 
   // ---- admin ----
   "admin:panel": { id: "admin:panel", icon: "layout-dashboard", name: "Panel de control", href: "/admin", primary: true },
-  "admin:usuarios": { id: "admin:usuarios", icon: "users", name: "Usuarios", href: "/admin#usuarios", primary: true },
+  "admin:usuarios": { id: "admin:usuarios", icon: "users", name: "Usuarios", href: "/admin/usuarios", primary: true },
   "admin:organizaciones": { id: "admin:organizaciones", icon: "building-2", name: "Organizaciones", href: "/admin#orgs", primary: true },
   "admin:permisos": { id: "admin:permisos", icon: "shield-check", name: "Permisos por rol", href: "/admin/permisos", primary: true },
   "admin:modulos": { id: "admin:modulos", icon: "puzzle", name: "Módulos habilitados", href: "/admin/modulos" },
