@@ -23,6 +23,21 @@ import {
 import type { BadgeTone } from "@/components/portal/badge";
 import { sectionsFromKeys, landingForRole, type Section } from "@/lib/portal-config";
 
+// ============================================================================
+//  REGLA DE VENTAS (Gerente Comercial · Etapa 2) — anotada, aún sin implementar.
+// ----------------------------------------------------------------------------
+//  Fuente del dato: cascada por campaña ENTERA (ver lib/ventas-cascada.ts).
+//    facturada → aware_analytics 04_facturacion_documentos_*
+//    en_curso  → vintelarg_base 03_campania_ordenes(_detalle)
+//    na        → mostrar "NA" (no inventar, no 0). Sin mezclar fuentes.
+//
+//  Venta BRUTA = SUM(importe_con_imp) WHERE naturaleza = '1'.
+//    Solo naturaleza '1'. NO restar créditos. Las NC/ND viven en
+//    04_facturacion_nc_* (hoy vacías), por eso registros naturaleza '2'/'3'
+//    (negativos) aparecen dentro de documentos_cabecera; filtrando naturaleza='1'
+//    se ignoran SIEMPRE, estén donde estén. Bruta NO neta de créditos.
+// ============================================================================
+
 // ---------- helpers ----------
 export function relativeTime(d: Date | string | null): string {
   if (!d) return "—";
