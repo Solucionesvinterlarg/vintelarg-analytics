@@ -159,7 +159,7 @@ export const SECTION_CATALOG: Record<string, Section> = {
   "admin:organizaciones": { id: "admin:organizaciones", icon: "building-2", name: "Organizaciones", href: "/admin/organizaciones", primary: true },
   "admin:permisos": { id: "admin:permisos", icon: "shield-check", name: "Permisos por rol", href: "/admin/permisos", primary: true },
   "admin:modulos": { id: "admin:modulos", icon: "puzzle", name: "Módulos habilitados", href: "/admin/modulos" },
-  "admin:campanas": { id: "admin:campanas", icon: "settings", name: "Config. campañas", href: "/admin#campanas" },
+  "admin:campanas": { id: "admin:campanas", icon: "settings", name: "Config. campañas", href: "/admin/campanias" },
 
   // ---- dashboard (interno) → módulo reporteria ----
   "dashboard:360": { id: "dashboard:360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard", primary: true, module: "reporteria" },
