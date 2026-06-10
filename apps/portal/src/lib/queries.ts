@@ -21,7 +21,7 @@ import {
   campanias,
 } from "./schema";
 import type { BadgeTone } from "@/components/portal/badge";
-import { sectionsFromKeys, landingForRole, type Section } from "@/lib/portal-config";
+import { sectionsFromKeys, applyHrefOverrides, landingForRole, type Section } from "@/lib/portal-config";
 
 // ============================================================================
 //  REGLA DE VENTAS (Gerente Comercial · Etapa 2) — anotada, aún sin implementar.
@@ -545,7 +545,9 @@ export async function getNavForUser(roleKey: string, orgId: string): Promise<Sec
   try {
     const allowed = await getAllowedResources(roleKey, orgId);
     const keys = landingForRole(roleKey) === "/home" ? ["shared:inicio", ...allowed] : allowed;
-    sections = sectionsFromKeys(keys);
+    // Override de href por rol (genérico): gerente → Reclamos/Tickets a placeholder
+    // CRM; Atención al Cliente conserva /atencion. No muta el catálogo.
+    sections = applyHrefOverrides(roleKey, sectionsFromKeys(keys));
     if (sections.length === 0) {
       console.error(`[portal] getNavForUser: sin secciones (role=${roleKey} org=${orgId}); menú mínimo`);
       return sectionsFromKeys(MIN_NAV_KEYS);

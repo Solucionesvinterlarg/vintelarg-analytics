@@ -287,6 +287,32 @@ export const ROLE_RESOURCE_KEYS: Record<Role, string[]> = {
 };
 
 // ============================================================
+//  Override de href por rol (genérico, reusable).
+//  Una misma clave de recurso puede apuntar a destinos distintos según el rol
+//  (ej. ops:tickets → /atencion para Atención al Cliente, pero → placeholder CRM
+//  para el Gerente). En vez de branchear por rol en la UI, se declara acá un mapa
+//  rol → (clave → href) que PISA el href del catálogo al construir el menú.
+//  Pensado para reutilizarse con otros perfiles que compartan claves.
+// ============================================================
+export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> = {
+  gerente_comercial: {
+    // Reclamos/Tickets del gerente: placeholder del módulo CRM (no el /atencion real).
+    "ops:reclamos": "/dashboard/reclamos",
+    "ops:tickets": "/dashboard/tickets",
+  },
+};
+
+/**
+ * Aplica los overrides de href del rol sobre las secciones. Devuelve objetos
+ * NUEVOS (no muta SECTION_CATALOG, que es compartido entre roles).
+ */
+export function applyHrefOverrides(raw: string | undefined | null, sections: Section[]): Section[] {
+  const ov = ROLE_HREF_OVERRIDES[normalizeRole(raw)];
+  if (!ov) return sections;
+  return sections.map((s) => (ov[s.id] ? { ...s, href: ov[s.id] } : s));
+}
+
+// ============================================================
 //  Selectores de menú a partir de claves permitidas.
 // ============================================================
 
@@ -320,7 +346,7 @@ export function extrasFromSections(sections: Section[]): Section[] {
 
 /** Lista completa de secciones del rol (para el sidebar). */
 export function navForRole(raw: string | undefined | null): Section[] {
-  return sectionsFromKeys(ROLE_RESOURCE_KEYS[normalizeRole(raw)]);
+  return applyHrefOverrides(raw, sectionsFromKeys(ROLE_RESOURCE_KEYS[normalizeRole(raw)]));
 }
 
 /** Secciones `primary` (máx. 4) que se muestran como bottom-tabs en mobile. */
