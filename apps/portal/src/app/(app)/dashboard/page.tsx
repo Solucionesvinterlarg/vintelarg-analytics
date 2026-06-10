@@ -5,6 +5,7 @@ import { normalizeRole, DESKTOP_FILTERS } from "@/lib/portal-config";
 import { DesktopTopBar } from "@/components/shells/desktop-topbar";
 import { KpiCard } from "@/components/portal/kpi-card";
 import { PortalBadge } from "@/components/portal/badge";
+import { Dashboard360View } from "@/features/gerente/dashboard-360-view";
 
 /* ------------------------------------------------------------------ */
 /*  AlertBar — borde rojo izquierdo, fondo #FEF2F2                     */
@@ -189,7 +190,11 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   const role = normalizeRole(user?.role);
 
-  const showAlert = role === "gerente_comercial" || role === "comercial";
+  // El Gerente Comercial tiene su propia maqueta 360° (mock, Lote 2). Comercial
+  // y marketing conservan la vista existente de abajo, sin cambios.
+  if (role === "gerente_comercial") return <Dashboard360View />;
+
+  const showAlert = role === "comercial";
   const isMarketing = role === "marketing";
 
   return (
