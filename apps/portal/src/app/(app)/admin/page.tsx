@@ -2,327 +2,104 @@ import { Users, Puzzle, ShieldCheck } from "lucide-react";
 import { DesktopTopBar } from "@/components/shells/desktop-topbar";
 import { Sparkline } from "@/components/portal/sparkline";
 import { PortalBadge } from "@/components/portal/badge";
+import { getAdminOverview } from "@/lib/queries";
 
-/* ── timeline data ─────────────────────────────────────────────────────── */
-type TimelineEntry = {
-  t: string;
-  badge: string;
-  tone: "violet" | "info" | "success" | "neutral";
-  label: React.ReactNode;
-};
+export const dynamic = "force-dynamic";
 
-const timeline: TimelineEntry[] = [
-  {
-    t: "hace 2 min",
-    label: (
-      <>
-        <strong>María López</strong> inició sesión
-      </>
-    ),
-    badge: "Emprendedora",
-    tone: "violet",
-  },
-  {
-    t: "hace 15 min",
-    label: (
-      <>
-        <strong>Patricia Gómez</strong> aprobó reclamo #4521
-      </>
-    ),
-    badge: "GC",
-    tone: "info",
-  },
-  {
-    t: "hace 1 hora",
-    label: (
-      <>
-        Se habilitó módulo <strong>Cambios y Reclamos</strong>
-      </>
-    ),
-    badge: "Sistema",
-    tone: "success",
-  },
-  {
-    t: "hace 3 horas",
-    label: (
-      <>
-        Nuevo usuario registrado: <strong>Ana Torres</strong>
-      </>
-    ),
-    badge: "Auto",
-    tone: "neutral",
-  },
-  {
-    t: "hace 5 horas",
-    label: <>Backup de base completado</>,
-    badge: "Sistema",
-    tone: "success",
-  },
-];
+export default async function AdminHomePage() {
+  const o = await getAdminOverview();
 
-/* ── shortcuts data ────────────────────────────────────────────────────── */
-const shortcuts = [
-  {
-    icon: <Users size={20} strokeWidth={1.5} />,
-    title: "Gestionar usuarios",
-    desc: "487 usuarios · 23 pendientes de verificación",
-  },
-  {
-    icon: <Puzzle size={20} strokeWidth={1.5} />,
-    title: "Configurar módulos",
-    desc: "5 habilitados · 6 disponibles",
-  },
-  {
-    icon: <ShieldCheck size={20} strokeWidth={1.5} />,
-    title: "Permisos por rol",
-    desc: "7 roles · 42 permisos configurados",
-  },
-];
+  const shortcuts = [
+    { Icon: Users, title: "Gestionar usuarios", desc: `${o.usuarios} usuarios · ${o.orgs} organización(es)` },
+    { Icon: Puzzle, title: "Configurar módulos", desc: "Sin módulos configurados todavía" },
+    { Icon: ShieldCheck, title: "Permisos por rol", desc: `${o.roles} roles configurados` },
+  ];
 
-/* ── page ──────────────────────────────────────────────────────────────── */
-export default function AdminHomePage() {
   return (
     <>
       <DesktopTopBar title="Panel de control" initials="DA" />
 
-      {/* Metric cards */}
-      <div
-        className="grid grid-cols-4 gap-[14px]"
-        style={{ padding: "20px 24px 0" }}
-      >
-        {/* Usuarios activos */}
-        <div
-          className="rounded-2xl bg-card"
-          style={{
-            padding: 18,
-            border: "0.5px solid var(--aw-hairline)",
-          }}
-        >
-          <p
-            className="m-0 text-[11px] font-bold uppercase tracking-[0.1em]"
-            style={{ color: "var(--fg-subtle)" }}
-          >
-            Usuarios activos
-          </p>
-          <p className="m-0 mt-1.5 text-[28px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
-            487
-          </p>
-          <p
-            className="m-0 mt-0.5 text-xs font-semibold"
-            style={{ color: "var(--aw-success)" }}
-          >
-            +12 esta semana
-          </p>
-        </div>
+      {/* Métricas (reales) */}
+      <div className="grid grid-cols-4 gap-[14px]" style={{ padding: "20px 24px 0" }}>
+        <Card title="Usuarios activos">
+          <Value>{o.usuarios}</Value>
+          <div className="mt-0.5 text-xs font-semibold" style={{ color: "var(--aw-success)" }}>
+            {o.usuariosSemana > 0 ? `+${o.usuariosSemana} esta semana` : "Sin altas esta semana"}
+          </div>
+        </Card>
 
-        {/* Organizaciones */}
-        <div
-          className="rounded-2xl bg-card"
-          style={{
-            padding: 18,
-            border: "0.5px solid var(--aw-hairline)",
-          }}
-        >
-          <p
-            className="m-0 text-[11px] font-bold uppercase tracking-[0.1em]"
-            style={{ color: "var(--fg-subtle)" }}
-          >
-            Organizaciones
-          </p>
-          <p className="m-0 mt-1.5 text-[28px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
-            1
-          </p>
-          <p
-            className="m-0 mt-0.5 text-xs"
-            style={{ color: "var(--fg-muted)" }}
-          >
-            Aware S.A.
-          </p>
-        </div>
+        <Card title="Organizaciones">
+          <Value>{o.orgs}</Value>
+          <div className="mt-0.5 text-xs" style={{ color: "var(--fg-muted)" }}>{o.orgName}</div>
+        </Card>
 
-        {/* Sesiones hoy */}
-        <div
-          className="rounded-2xl bg-card"
-          style={{
-            padding: 18,
-            border: "0.5px solid var(--aw-hairline)",
-          }}
-        >
-          <p
-            className="m-0 text-[11px] font-bold uppercase tracking-[0.1em]"
-            style={{ color: "var(--fg-subtle)" }}
-          >
-            Sesiones hoy
-          </p>
-          <p className="m-0 mt-1.5 text-[28px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
-            234
-          </p>
+        <Card title="Sesiones (7 días)">
+          <Value>{o.sesionesHoy}</Value>
           <div className="mt-1">
-            <Sparkline
-              values={[180, 195, 210, 198, 220, 228, 234]}
-              color="var(--aw-violet)"
-              width={180}
-              height={28}
-            />
+            <Sparkline values={o.sesionesPorDia} color="var(--aw-violet)" width={180} height={28} />
           </div>
-        </div>
+        </Card>
 
-        {/* Módulos activos */}
-        <div
-          className="rounded-2xl bg-card"
-          style={{
-            padding: 18,
-            border: "0.5px solid var(--aw-hairline)",
-          }}
-        >
-          <p
-            className="m-0 text-[11px] font-bold uppercase tracking-[0.1em]"
-            style={{ color: "var(--fg-subtle)" }}
-          >
-            Módulos activos
-          </p>
-          <p className="m-0 mt-1.5 text-[28px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
-            5{" "}
-            <span
-              className="text-sm font-semibold"
-              style={{ color: "var(--fg-subtle)" }}
-            >
-              de 11
-            </span>
-          </p>
-          <div
-            className="mt-2 h-1.5 overflow-hidden rounded-full"
-            style={{ background: "#F1EFEA" }}
-          >
-            <div
-              className="h-full rounded-full"
-              style={{ width: "45%", background: "var(--aw-violet)" }}
-            />
-          </div>
-        </div>
+        {/* Módulos: sin fuente todavía → empty state */}
+        <Card title="Módulos activos">
+          <div className="mt-1.5 text-[28px] font-extrabold leading-none tracking-[-0.02em] text-[var(--aw-stone)]">—</div>
+          <div className="mt-1 text-xs" style={{ color: "var(--fg-subtle)" }}>Sin configurar</div>
+        </Card>
       </div>
 
-      {/* Two-column: timeline + shortcuts */}
-      <div
-        style={{
-          padding: "18px 24px 24px",
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 16,
-          flex: 1,
-        }}
-      >
-        {/* Actividad reciente */}
-        <div
-          className="rounded-2xl bg-card"
-          style={{
-            padding: "18px 22px",
-            border: "0.5px solid var(--aw-hairline)",
-          }}
-        >
+      {/* Actividad + accesos */}
+      <div style={{ padding: "18px 24px 24px", display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, flex: 1 }}>
+        <div className="rounded-2xl bg-card" style={{ padding: "18px 22px", border: "0.5px solid var(--aw-hairline)" }}>
           <div className="mb-3.5 flex items-baseline justify-between">
-            <h3 className="m-0 text-sm font-bold tracking-[-0.01em] text-foreground">
-              Actividad reciente
-            </h3>
-            <a
-              className="cursor-pointer text-xs font-bold"
-              style={{ color: "var(--aw-violet)" }}
-            >
-              Ver registro completo
-            </a>
+            <h3 className="m-0 text-sm font-bold tracking-[-0.01em] text-foreground">Actividad reciente</h3>
+            <span className="text-xs font-bold" style={{ color: "var(--aw-violet)" }}>Ver registro completo</span>
           </div>
-
-          {/* Timeline */}
-          <div className="relative pl-4">
-            {/* vertical line */}
-            <div
-              className="absolute bottom-1 top-1 w-px"
-              style={{ left: 5, background: "var(--aw-hairline)" }}
-            />
-
-            {timeline.map((entry, i) => (
-              <div key={i} className="relative flex items-center gap-3 py-2.5">
-                {/* dot */}
-                <div
-                  className="absolute size-[11px] rounded-full bg-card"
-                  style={{
-                    left: -16,
-                    top: 16,
-                    border: "2px solid var(--aw-violet)",
-                  }}
-                />
-                {/* time */}
-                <p
-                  className="m-0 min-w-[80px] text-[11px] font-semibold"
-                  style={{ color: "var(--fg-subtle)" }}
-                >
-                  {entry.t}
-                </p>
-                {/* event text */}
-                <p className="m-0 flex-1 text-[13px] text-foreground">
-                  {entry.label}
-                </p>
-                {/* badge */}
-                <PortalBadge tone={entry.tone}>{entry.badge}</PortalBadge>
-              </div>
-            ))}
-          </div>
+          {o.actividad.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Sin actividad registrada.</div>
+          ) : (
+            <div className="relative pl-4">
+              <div className="absolute bottom-1 top-1 w-px" style={{ left: 5, background: "var(--aw-hairline)" }} />
+              {o.actividad.map((a, i) => (
+                <div key={i} className="relative flex items-center gap-3 py-2.5">
+                  <div className="absolute size-[11px] rounded-full bg-card" style={{ left: -16, top: 16, border: "2px solid var(--aw-violet)" }} />
+                  <div className="m-0 min-w-[80px] text-[11px] font-semibold" style={{ color: "var(--fg-subtle)" }}>{a.when}</div>
+                  <div className="flex-1 text-[13px] text-foreground">{a.text}</div>
+                  <PortalBadge tone={a.tone}>{a.badge}</PortalBadge>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Accesos directos */}
         <div className="flex flex-col gap-3">
-          <h3
-            className="m-0 mb-[-4px] mt-1 text-[11px] font-bold uppercase tracking-[0.1em]"
-            style={{ color: "var(--fg-subtle)" }}
-          >
-            Accesos directos
-          </h3>
-
-          {shortcuts.map((s, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3.5 rounded-[14px] bg-card"
-              style={{
-                padding: "14px 16px",
-                border: "0.5px solid var(--aw-hairline)",
-              }}
-            >
-              {/* icon bubble */}
-              <div
-                className="grid size-[42px] flex-none place-items-center rounded-xl"
-                style={{
-                  background: "var(--aw-violet-light)",
-                  color: "var(--aw-violet)",
-                }}
-              >
-                {s.icon}
+          <h3 className="m-0 mb-[-4px] mt-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--fg-subtle)]">Accesos directos</h3>
+          {shortcuts.map((s) => (
+            <div key={s.title} className="flex items-center gap-3.5 rounded-2xl bg-card px-4 py-3.5" style={{ border: "0.5px solid var(--aw-hairline)" }}>
+              <div className="grid size-[42px] shrink-0 place-items-center rounded-xl" style={{ background: "var(--aw-violet-light)", color: "var(--aw-violet)" }}>
+                <s.Icon size={20} strokeWidth={1.5} />
               </div>
-
-              {/* text */}
               <div className="min-w-0 flex-1">
-                <p className="m-0 text-[13px] font-bold text-foreground">
-                  {s.title}
-                </p>
-                <p
-                  className="m-0 mt-px text-[11px]"
-                  style={{ color: "var(--fg-subtle)" }}
-                >
-                  {s.desc}
-                </p>
+                <div className="text-[13px] font-bold">{s.title}</div>
+                <div className="mt-px text-[11px]" style={{ color: "var(--fg-subtle)" }}>{s.desc}</div>
               </div>
-
-              {/* CTA */}
-              <button
-                type="button"
-                className="cursor-pointer rounded-full border-0 px-3.5 py-[7px] text-xs font-bold text-white"
-                style={{ background: "var(--aw-violet)" }}
-              >
-                Ir →
-              </button>
+              <button className="rounded-full border-0 px-3.5 py-[7px] text-[12px] font-bold text-white" style={{ background: "var(--aw-violet)" }}>Ir →</button>
             </div>
           ))}
         </div>
       </div>
     </>
   );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-card" style={{ padding: 18, border: "0.5px solid var(--aw-hairline)" }}>
+      <p className="m-0 text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--fg-subtle)" }}>{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function Value({ children }: { children: React.ReactNode }) {
+  return <p className="m-0 mt-1.5 text-[28px] font-extrabold leading-none tracking-[-0.02em] text-foreground">{children}</p>;
 }

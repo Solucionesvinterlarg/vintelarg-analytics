@@ -27,7 +27,7 @@ export type Role =
   | "cuentas_corrientes"
   | "administracion"
   | "deposito"
-  | "lci"
+  | "lci_lider"
   | "emprendedor";
 
 /** Normaliza el claim de rol del IdP a un Role canónico. Fallback: emprendedor. */
@@ -54,10 +54,11 @@ export function normalizeRole(raw: string | undefined | null): Role {
     deposito: "deposito",
     "depósito": "deposito",
     almacen: "deposito",
-    lci: "lci",
-    lider: "lci",
-    lider_comercial: "lci",
-    lider_comercial_independiente: "lci",
+    lci: "lci_lider",
+    lci_lider: "lci_lider",
+    lider: "lci_lider",
+    lider_comercial: "lci_lider",
+    lider_comercial_independiente: "lci_lider",
     emprendedor: "emprendedor",
     emprendedora: "emprendedor",
     revendedor: "emprendedor",
@@ -70,18 +71,31 @@ export function normalizeRole(raw: string | undefined | null): Role {
 export const LANDING_BY_ROLE: Record<Role, string> = {
   admin: "/admin",
   gerente_comercial: "/dashboard",
-  atencion_cliente: "/atencion",
+  // Atención al cliente: su trabajo de tickets/reclamos vive en el módulo CRM;
+  // en el portal aterriza en Fuerza de ventas (1er ítem de su menú). /atencion
+  // ya no es su landing ni está en su menú.
+  atencion_cliente: "/dashboard/fuerza-ventas",
   comercial: "/dashboard",
   marketing: "/dashboard",
-  cuentas_corrientes: "/dashboard",
-  administracion: "/dashboard",
-  deposito: "/dashboard",
-  lci: "/home",
-  emprendedor: "/home",
+  cuentas_corrientes: "/inicio",
+  administracion: "/inicio",
+  deposito: "/inicio",
+  lci_lider: "/lci/inicio",
+  emprendedor: "/emp/inicio",
 };
 
 export function landingForRole(raw: string | undefined | null): string {
   return LANDING_BY_ROLE[normalizeRole(raw)];
+}
+
+/**
+ * Audiencia "red comercial" (app mobile con shell phone) vs interna (shell
+ * sidebar). Resuelto por rol server-side (no por usuario, no if-rol en el
+ * render): el shell lo elige el layout. lci_lider es desktop (sidebar), NO phone.
+ */
+const PHONE_AUDIENCE: Partial<Record<Role, true>> = { emprendedor: true };
+export function isPhoneAudience(raw: string | undefined | null): boolean {
+  return !!PHONE_AUDIENCE[normalizeRole(raw)];
 }
 
 /** Etiqueta legible del rol para el footer del sidebar / avatar. */
@@ -94,7 +108,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   cuentas_corrientes: "Cuentas Corrientes",
   administracion: "Administración",
   deposito: "Depósito",
-  lci: "Líder Comercial",
+  lci_lider: "Líder Comercial",
   emprendedor: "Emprendedora",
 };
 
@@ -152,30 +166,34 @@ const TINT = {
 export const SECTION_CATALOG: Record<string, Section> = {
   // landing (no permisada; siempre disponible para la red comercial)
   "shared:inicio": { id: "shared:inicio", icon: "home", name: "Inicio", href: "/", primary: true },
+  // Inicio/Próximamente del back-office interno (teaser "acceso mínimo"). Es un
+  // recurso permisado por matriz (a diferencia de shared:inicio, que es el landing
+  // inyectado de la red comercial). Sin módulo: siempre disponible.
+  "shared:proximamente": { id: "shared:proximamente", icon: "sparkles", name: "Inicio", href: "/inicio", primary: true },
 
   // ---- admin ----
   "admin:panel": { id: "admin:panel", icon: "layout-dashboard", name: "Panel de control", href: "/admin", primary: true },
-  "admin:usuarios": { id: "admin:usuarios", icon: "users", name: "Usuarios", href: "/admin#usuarios", primary: true },
-  "admin:organizaciones": { id: "admin:organizaciones", icon: "building-2", name: "Organizaciones", href: "/admin#orgs", primary: true },
+  "admin:usuarios": { id: "admin:usuarios", icon: "users", name: "Usuarios", href: "/admin/usuarios", primary: true },
+  "admin:organizaciones": { id: "admin:organizaciones", icon: "building-2", name: "Organizaciones", href: "/admin/organizaciones", primary: true },
   "admin:permisos": { id: "admin:permisos", icon: "shield-check", name: "Permisos por rol", href: "/admin/permisos", primary: true },
   "admin:modulos": { id: "admin:modulos", icon: "puzzle", name: "Módulos habilitados", href: "/admin/modulos" },
-  "admin:campanas": { id: "admin:campanas", icon: "settings", name: "Config. campañas", href: "/admin#campanas" },
+  "admin:campanas": { id: "admin:campanas", icon: "settings", name: "Config. campañas", href: "/admin/campanias" },
 
   // ---- dashboard (interno) → módulo reporteria ----
   "dashboard:360": { id: "dashboard:360", icon: "chart-pie", name: "Dashboard 360°", href: "/dashboard", primary: true, module: "reporteria" },
-  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard#fuerza", primary: true, module: "reporteria" },
-  "dashboard:performance": { id: "dashboard:performance", icon: "trending-up", name: "Performance comercial", href: "/dashboard#performance", primary: true, module: "reporteria" },
-  "dashboard:top-performers": { id: "dashboard:top-performers", icon: "trophy", name: "Top performers", href: "/dashboard#top", primary: true, module: "reporteria" },
-  "dashboard:indicaciones": { id: "dashboard:indicaciones", icon: "git-branch", name: "Indicaciones", href: "/dashboard#indicaciones", module: "reporteria" },
-  "dashboard:onboarding": { id: "dashboard:onboarding", icon: "user-plus", name: "Onboarding", href: "/dashboard#onboarding", module: "reporteria" },
-  "dashboard:estado-cuenta": { id: "dashboard:estado-cuenta", icon: "coins", name: "Estado de cuenta", href: "/dashboard#cuenta", module: "reporteria" },
-  "dashboard:mix-productos": { id: "dashboard:mix-productos", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard#mix", primary: true, module: "reporteria" },
-  "dashboard:cobertura": { id: "dashboard:cobertura", icon: "map-pin", name: "Cobertura", href: "/dashboard#cobertura", module: "reporteria" },
-  "dashboard:alertas": { id: "dashboard:alertas", icon: "bell", name: "Centro de alertas", href: "/dashboard#alertas", module: "reporteria" },
-  "dashboard:reportes": { id: "dashboard:reportes", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard#reportes", module: "reporteria" },
-  "dashboard:objetivos": { id: "dashboard:objetivos", icon: "target", name: "Config. objetivos", href: "/dashboard#objetivos", module: "reporteria" },
-  "dashboard:tendencia": { id: "dashboard:tendencia", icon: "activity", name: "Tendencia", href: "/dashboard#tendencia", primary: true, module: "reporteria" },
-  "dashboard:plan-bi": { id: "dashboard:plan-bi", icon: "clipboard-list", name: "Plan comercial BI", href: "/dashboard#plan", module: "reporteria" },
+  "dashboard:fuerza-ventas": { id: "dashboard:fuerza-ventas", icon: "users", name: "Fuerza de ventas", href: "/dashboard/fuerza-ventas", primary: true, module: "reporteria" },
+  "dashboard:performance": { id: "dashboard:performance", icon: "trending-up", name: "Performance comercial", href: "/dashboard/performance", primary: true, module: "reporteria" },
+  "dashboard:top-performers": { id: "dashboard:top-performers", icon: "trophy", name: "Top performers", href: "/dashboard/top-performers", primary: true, module: "reporteria" },
+  "dashboard:indicaciones": { id: "dashboard:indicaciones", icon: "git-branch", name: "Indicaciones", href: "/dashboard/indicaciones", module: "reporteria" },
+  "dashboard:onboarding": { id: "dashboard:onboarding", icon: "user-plus", name: "Onboarding", href: "/dashboard/onboarding", module: "reporteria" },
+  "dashboard:estado-cuenta": { id: "dashboard:estado-cuenta", icon: "coins", name: "Estado de cuenta", href: "/dashboard/estado-cuenta", module: "reporteria" },
+  "dashboard:mix-productos": { id: "dashboard:mix-productos", icon: "bar-chart-3", name: "Mix de productos", href: "/dashboard/mix-productos", primary: true, module: "reporteria" },
+  "dashboard:cobertura": { id: "dashboard:cobertura", icon: "map-pin", name: "Cobertura", href: "/dashboard/cobertura", module: "reporteria" },
+  "dashboard:alertas": { id: "dashboard:alertas", icon: "bell", name: "Centro de alertas", href: "/dashboard/alertas", module: "reporteria" },
+  "dashboard:reportes": { id: "dashboard:reportes", icon: "file-text", name: "Biblioteca de reportes", href: "/dashboard/reportes", module: "reporteria" },
+  "dashboard:objetivos": { id: "dashboard:objetivos", icon: "target", name: "Config. objetivos", href: "/dashboard/objetivos", module: "reporteria" },
+  "dashboard:tendencia": { id: "dashboard:tendencia", icon: "activity", name: "Tendencia", href: "/dashboard/tendencia", primary: true, module: "reporteria" },
+  "dashboard:plan-bi": { id: "dashboard:plan-bi", icon: "clipboard-list", name: "Plan comercial BI", href: "/dashboard/plan-bi", module: "reporteria" },
 
   // ---- ops (back-office / atención) ----
   "ops:reclamos": { id: "ops:reclamos", icon: "refresh-ccw", name: "Gestión de reclamos", href: "/atencion#reclamos", primary: true, module: "returns" },
@@ -188,30 +206,45 @@ export const SECTION_CATALOG: Record<string, Section> = {
   "sat:crm": { id: "sat:crm", icon: "user-search", name: "CRM Contactos", href: "/atencion#crm", primary: true, module: "crm" },
   "sat:pedidos-app": { id: "sat:pedidos-app", icon: "smartphone", name: "Pedidos App", href: "/atencion#pedidos-app", module: "commerce" },
 
-  // ---- red (líderes / LCI) → módulo sales_force ----
-  "red:dashboard-lideres": { id: "red:dashboard-lideres", icon: "layout-dashboard", name: "Dashboard líderes", href: "/home#lideres", module: "sales_force" },
-  "red:performance-campania": { id: "red:performance-campania", icon: "bar-chart-3", name: "Campaña", href: "/home#campana", primary: true, module: "sales_force" },
-  "red:mi-red": { id: "red:mi-red", icon: "users", name: "Mi red", href: "/home#red", primary: true, module: "sales_force" },
-  "red:detalle-revendedora": { id: "red:detalle-revendedora", icon: "user-search", name: "Detalle revendedora", href: "/home#revendedora", module: "sales_force" },
-  "red:pedido-woe": { id: "red:pedido-woe", icon: "package", name: "Pedido WOE", href: "/home#pedido-woe", module: "sales_force" },
-  "red:simulador-titulos": { id: "red:simulador-titulos", icon: "calculator", name: "Simulador de títulos", href: "/home#simulador", module: "sales_force" },
-  "red:bonificacion": { id: "red:bonificacion", icon: "wallet", name: "Bonificación", href: "/home#bonificacion", primary: true, module: "sales_force" },
-  "red:plan-lucero": { id: "red:plan-lucero", icon: "star", name: "Plan Lucero", href: "/home#plan-lucero", module: "sales_force" },
-  "red:reportes-lider": { id: "red:reportes-lider", icon: "file-text", name: "Reportes de líder", href: "/home#reportes-lider", module: "sales_force" },
+  // ---- lci (consola DESKTOP del Líder Comercial Independiente) — recursos del
+  //      catálogo, rutas /lci/*. Render en AppShell desktop (sidebar). MOCK Lote 2.
+  "lci:inicio": { id: "lci:inicio", icon: "home", name: "Inicio", href: "/lci/inicio", primary: true },
+  "lci:campana": { id: "lci:campana", icon: "bar-chart-3", name: "Campaña", href: "/lci/campana" },
+  "lci:red": { id: "lci:red", icon: "users", name: "Mi red", href: "/lci/red" },
+  "lci:bonificacion": { id: "lci:bonificacion", icon: "receipt", name: "Bonificación", href: "/lci/bonificacion" },
+  "lci:dashboard": { id: "lci:dashboard", icon: "layout-dashboard", name: "Dashboard líderes", href: "/lci/dashboard" },
+  "lci:revendedora": { id: "lci:revendedora", icon: "user-search", name: "Detalle revendedora", href: "/lci/revendedora" },
+  "lci:pedido-woe": { id: "lci:pedido-woe", icon: "package", name: "Pedido WOE", href: "/lci/pedido-woe" },
+  "lci:simulador": { id: "lci:simulador", icon: "calculator", name: "Simulador de títulos", href: "/lci/simulador" },
+  "lci:plan-lucero": { id: "lci:plan-lucero", icon: "star", name: "Plan Lucero", href: "/lci/plan-lucero" },
+  "lci:reportes": { id: "lci:reportes", icon: "file-text", name: "Reportes de líder", href: "/lci/reportes" },
+  "lci:asistente": { id: "lci:asistente", icon: "bot", name: "Asistente IA", href: "/lci/asistente" },
+  "lci:perfil": { id: "lci:perfil", icon: "user", name: "Mi perfil", href: "/lci/perfil" },
 
-  // ---- emp (emprendedora) → commerce, salvo reclamos (returns) ----
-  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Catálogo", href: "/home#catalogo", primary: true, module: "commerce" },
-  "emp:mis-pedidos": { id: "emp:mis-pedidos", icon: "package", name: "Pedidos", href: "/home#pedidos", primary: true, module: "commerce" },
-  "emp:mi-cuenta": { id: "emp:mi-cuenta", icon: "wallet", name: "Cuenta", href: "/home#cuenta", primary: true, module: "commerce" },
-  "emp:mis-reclamos": { id: "emp:mis-reclamos", icon: "refresh-ccw", name: "Cambios y reclamos", href: "/home#reclamos", desc: "Crear o consultar", tint: TINT.amber, module: "returns" },
-  "emp:mis-facturas": { id: "emp:mis-facturas", icon: "file-text", name: "Mis facturas", href: "/home#facturas", desc: "Consultar facturas emitidas", tint: TINT.blue, module: "commerce" },
-  "emp:mis-boletas": { id: "emp:mis-boletas", icon: "receipt", name: "Boletas de pago", href: "/home#boletas", desc: "Ver boletas y vencimientos", tint: TINT.green, module: "commerce" },
+  // ---- emp (app EMPRENDEDORA) — recursos del portal, rutas /emp/*. Son
+  //      recursos ÚNICOS (cualquier rol los puede prender por matriz). El shell
+  //      "phone" los presenta como bottom-tabs (primary) + drawer (resto).
+  "emp:inicio": { id: "emp:inicio", icon: "home", name: "Inicio", href: "/emp/inicio", primary: true },
+  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Pedidos", href: "/emp/catalogo", primary: true },
+  "emp:logros": { id: "emp:logros", icon: "trophy", name: "Logros", href: "/emp/logros", primary: true },
+  "emp:perfil": { id: "emp:perfil", icon: "user", name: "Perfil", href: "/emp/perfil", primary: true },
+  "emp:finanzas": { id: "emp:finanzas", icon: "wallet", name: "Mis Finanzas", href: "/emp/finanzas" },
+  "emp:negocio": { id: "emp:negocio", icon: "bar-chart-3", name: "Mi Negocio", href: "/emp/negocio" },
+  "emp:programas": { id: "emp:programas", icon: "gift", name: "Programas & Beneficios", href: "/emp/programas" },
+  "emp:incentivos": { id: "emp:incentivos", icon: "target", name: "Mis Incentivos", href: "/emp/incentivos" },
+  "emp:seguimiento": { id: "emp:seguimiento", icon: "truck", name: "Seguimiento Pedidos", href: "/emp/seguimiento" },
+  "emp:indicaciones": { id: "emp:indicaciones", icon: "users", name: "Mis Indicaciones", href: "/emp/indicaciones" },
+  "emp:onboarding": { id: "emp:onboarding", icon: "compass", name: "Onboarding", href: "/emp/onboarding" },
+  "emp:reclamos": { id: "emp:reclamos", icon: "message-square-warning", name: "Reclamos", href: "/emp/reclamos" },
+  "emp:novedades": { id: "emp:novedades", icon: "bell", name: "Novedades", href: "/emp/novedades" },
 
   // ---- shared (transversales; en mobile caen al sheet "Más") ----
   "shared:academia": { id: "shared:academia", icon: "graduation-cap", name: "Academia", href: "/academia", desc: "Cursos y materiales", tint: TINT.violet, module: "lms" },
   "shared:ai-agent": { id: "shared:ai-agent", icon: "bot", name: "Asistente IA", href: "/asistente", desc: "Ayuda inteligente", tint: TINT.violet, module: "ai_agent" },
-  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones", module: "mensajeria" },
-  "shared:perfil": { id: "shared:perfil", icon: "user", name: "Mi perfil", href: "/perfil", desc: "Datos personales y configuración", tint: TINT.neutral },
+  // Notificaciones y Mi perfil: pantallas core internas, siempre disponibles (sin
+  // gate de módulo) y primary (bottom-tabs del back-office en mobile).
+  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones", primary: true },
+  "shared:perfil": { id: "shared:perfil", icon: "user", name: "Mi perfil", href: "/perfil", primary: true, desc: "Datos personales y configuración", tint: TINT.neutral },
 };
 
 /**
@@ -221,6 +254,7 @@ export const SECTION_CATALOG: Record<string, Section> = {
  */
 export const SECTION_ORDER: string[] = [
   "shared:inicio",
+  "shared:proximamente",
   // admin
   "admin:panel", "admin:usuarios", "admin:organizaciones", "admin:permisos", "admin:modulos", "admin:campanas",
   // dashboard
@@ -232,11 +266,13 @@ export const SECTION_ORDER: string[] = [
   "ops:reclamos", "ops:tickets", "ops:pedidos", "ops:facturas", "ops:boletas",
   // sat
   "sat:crm", "sat:pedidos-app",
-  // red
-  "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
-  "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero", "red:reportes-lider",
-  // emp
-  "emp:catalogo", "emp:mis-pedidos", "emp:mi-cuenta", "emp:mis-reclamos", "emp:mis-facturas", "emp:mis-boletas",
+  // lci (consola desktop del líder) — orden del sidebar del handoff
+  "lci:inicio", "lci:campana", "lci:red", "lci:bonificacion", "lci:dashboard",
+  "lci:revendedora", "lci:pedido-woe", "lci:simulador", "lci:plan-lucero", "lci:reportes", "lci:asistente", "lci:perfil",
+  // emp (app emprendedora) — tabs primero (Inicio/Pedidos/Logros/Perfil), resto al drawer
+  "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
+  "emp:finanzas", "emp:negocio", "emp:programas", "emp:incentivos",
+  "emp:seguimiento", "emp:indicaciones", "emp:onboarding", "emp:reclamos", "emp:novedades",
   // shared (resto)
   "shared:academia", "shared:ai-agent", "shared:notificaciones", "shared:perfil",
 ];
@@ -275,16 +311,97 @@ export const ROLE_RESOURCE_KEYS: Record<Role, string[]> = {
   cuentas_corrientes: COMERCIAL_KEYS,
   administracion: COMERCIAL_KEYS,
   deposito: COMERCIAL_KEYS,
-  lci: [
-    "shared:inicio", "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
-    "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero",
-    "red:reportes-lider", "shared:academia", "shared:ai-agent", "shared:perfil",
+  lci_lider: [
+    "lci:inicio", "lci:campana", "lci:red", "lci:bonificacion", "lci:dashboard",
+    "lci:revendedora", "lci:pedido-woe", "lci:simulador", "lci:plan-lucero", "lci:reportes",
+    "lci:asistente", "lci:perfil", "shared:academia",
   ],
   emprendedor: [
-    "shared:inicio", "emp:catalogo", "emp:mis-pedidos", "emp:mi-cuenta", "emp:mis-reclamos",
-    "emp:mis-facturas", "emp:mis-boletas", "shared:academia", "shared:ai-agent", "shared:perfil",
+    "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
+    "emp:finanzas", "emp:negocio", "emp:programas", "emp:incentivos",
+    "emp:seguimiento", "emp:indicaciones", "emp:reclamos", "emp:novedades", "emp:onboarding",
+    "shared:academia",
   ],
 };
+
+// ============================================================
+//  Override de href por rol (genérico, reusable).
+//  Una misma clave de recurso puede apuntar a destinos distintos según el rol
+//  (ej. ops:tickets → /atencion para Atención al Cliente, pero → placeholder CRM
+//  para el Gerente). En vez de branchear por rol en la UI, se declara acá un mapa
+//  rol → (clave → href) que PISA el href del catálogo al construir el menú.
+//  Pensado para reutilizarse con otros perfiles que compartan claves.
+// ============================================================
+export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> = {
+  gerente_comercial: {
+    // Reclamos/Tickets del gerente: placeholder del módulo CRM (no el /atencion real).
+    "ops:reclamos": "/dashboard/reclamos",
+    "ops:tickets": "/dashboard/tickets",
+  },
+  marketing: {
+    // CRM Contactos de marketing: placeholder del módulo CRM (no el /atencion real).
+    "sat:crm": "/dashboard/crm",
+  },
+  comercial: {
+    // CRM Contactos de comercial: placeholder del módulo CRM (no el /atencion real).
+    "sat:crm": "/dashboard/crm",
+  },
+  // Back-office interno: CRM Contactos → placeholder del módulo CRM.
+  cuentas_corrientes: { "sat:crm": "/dashboard/crm" },
+  administracion: { "sat:crm": "/dashboard/crm" },
+  deposito: { "sat:crm": "/dashboard/crm" },
+  // Atención al cliente: CRM Contactos → placeholder. Tickets/Reclamos son
+  // navegación interna del módulo CRM, NO ítems del portal.
+  atencion_cliente: { "sat:crm": "/dashboard/crm" },
+  // Emprendedora: Academia se abre como app EXTERNA (ingreso, no el grid del
+  // gerente). Mismo criterio que CRM Contactos.
+  emprendedor: { "shared:academia": "/emp/academia" },
+  // Líder Comercial: Academia = app externa (placeholder, no se maqueta el grid).
+  lci_lider: { "shared:academia": "/lci/academia" },
+};
+
+/**
+ * Cosmético por rol para el teaser de Inicio/Próximamente del back-office
+ * (chips + frase). Resuelto server-side y pasado por prop a la vista (sin
+ * `if(rol)` en el render). El rol legible sale de ROLE_LABEL.
+ */
+export interface BoTeaser {
+  chips: string[];
+  hint: string;
+}
+export const BO_TEASER_BY_ROLE: Partial<Record<Role, BoTeaser>> = {
+  cuentas_corrientes: {
+    chips: ["cartera", "retenciones", "ajustes"],
+    hint: "Acá vas a ver la cartera de cuentas, las retenciones y los ajustes manuales del período.",
+  },
+  deposito: {
+    chips: ["stock", "picking", "despacho"],
+    hint: "Acá vas a gestionar el stock, el armado de pedidos (picking) y el despacho.",
+  },
+  administracion: {
+    chips: ["a definir"],
+    hint: "El alcance de esta sección se está definiendo con el equipo de Administración.",
+  },
+};
+
+const BO_TEASER_DEFAULT: BoTeaser = {
+  chips: ["próximamente"],
+  hint: "Las pantallas específicas de este perfil se definen en la próxima etapa.",
+};
+
+export function teaserForRole(raw: string | undefined | null): BoTeaser {
+  return BO_TEASER_BY_ROLE[normalizeRole(raw)] ?? BO_TEASER_DEFAULT;
+}
+
+/**
+ * Aplica los overrides de href del rol sobre las secciones. Devuelve objetos
+ * NUEVOS (no muta SECTION_CATALOG, que es compartido entre roles).
+ */
+export function applyHrefOverrides(raw: string | undefined | null, sections: Section[]): Section[] {
+  const ov = ROLE_HREF_OVERRIDES[normalizeRole(raw)];
+  if (!ov) return sections;
+  return sections.map((s) => (ov[s.id] ? { ...s, href: ov[s.id] } : s));
+}
 
 // ============================================================
 //  Selectores de menú a partir de claves permitidas.
@@ -320,7 +437,7 @@ export function extrasFromSections(sections: Section[]): Section[] {
 
 /** Lista completa de secciones del rol (para el sidebar). */
 export function navForRole(raw: string | undefined | null): Section[] {
-  return sectionsFromKeys(ROLE_RESOURCE_KEYS[normalizeRole(raw)]);
+  return applyHrefOverrides(raw, sectionsFromKeys(ROLE_RESOURCE_KEYS[normalizeRole(raw)]));
 }
 
 /** Secciones `primary` (máx. 4) que se muestran como bottom-tabs en mobile. */
@@ -335,3 +452,17 @@ export function extraSectionsForRole(raw: string | undefined | null): Section[] 
 
 /** Filtros globales del topbar desktop (handoff). */
 export const DESKTOP_FILTERS = ["Campaña 202608", "División Zeus", "Canal: Consolidado", "Todas las zonas"];
+
+/**
+ * Chips de filtro del topbar resueltos POR ROL (server-side, igual que el menú —
+ * sin `if(rol)` en el render). Es COSMÉTICO: los filtros mock no re-filtran; el
+ * scope de datos real es Fase 2. Comercial ve su encuadre de equipo en vez de los
+ * filtros globales de empresa; el resto de roles ve los globales (default).
+ */
+export const SCOPE_TOPBAR_FILTERS: Partial<Record<Role, string[]>> = {
+  comercial: ["Mi equipo: Todo mi equipo", "Mis líderes: Todas mis líderes"],
+};
+
+export function topbarFiltersForRole(raw: string | undefined | null): string[] {
+  return SCOPE_TOPBAR_FILTERS[normalizeRole(raw)] ?? DESKTOP_FILTERS;
+}

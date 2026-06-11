@@ -11,6 +11,7 @@ import {
   ticketReasons,
   contacts,
   user,
+  member,
   organization,
   session,
   authEvents,
@@ -20,7 +21,22 @@ import {
   campanias,
 } from "./schema";
 import type { BadgeTone } from "@/components/portal/badge";
-import { sectionsFromKeys, landingForRole, type Section } from "@/lib/portal-config";
+import { sectionsFromKeys, applyHrefOverrides, landingForRole, type Section } from "@/lib/portal-config";
+
+// ============================================================================
+//  REGLA DE VENTAS (Gerente Comercial · Etapa 2) — anotada, aún sin implementar.
+// ----------------------------------------------------------------------------
+//  Fuente del dato: cascada por campaña ENTERA (ver lib/ventas-cascada.ts).
+//    facturada → aware_analytics 04_facturacion_documentos_*
+//    en_curso  → vintelarg_base 03_campania_ordenes(_detalle)
+//    na        → mostrar "NA" (no inventar, no 0). Sin mezclar fuentes.
+//
+//  Venta BRUTA = SUM(importe_con_imp) WHERE naturaleza = '1'.
+//    Solo naturaleza '1'. NO restar créditos. Las NC/ND viven en
+//    04_facturacion_nc_* (hoy vacías), por eso registros naturaleza '2'/'3'
+//    (negativos) aparecen dentro de documentos_cabecera; filtrando naturaleza='1'
+//    se ignoran SIEMPRE, estén donde estén. Bruta NO neta de créditos.
+// ============================================================================
 
 // ---------- helpers ----------
 export function relativeTime(d: Date | string | null): string {
@@ -35,6 +51,16 @@ export function relativeTime(d: Date | string | null): string {
   const dd = Math.floor(h / 24);
   if (dd === 1) return "ayer";
   return `hace ${dd} días`;
+}
+
+/** Fecha corta dd/mm/aaaa (es-AR). */
+export function shortDate(d: Date | string | null): string {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return "—";
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${date.getFullYear()}`;
 }
 
 const STATUS: Record<string, { label: string; tone: BadgeTone }> = {
@@ -233,6 +259,149 @@ export async function getAdminOverview(): Promise<AdminOverview> {
   };
 }
 
+// ---------- Admin: Usuarios (real) ----------
+export interface AdminUserRow {
+  id: string;
+  name: string;
+  email: string;
+  /** rol EN la org (member.role / role_key). Sobre esto opera el filtro de rol. */
+  roleKey: string | null;
+  /** etiqueta legible del rol (role_definitions.display_name). */
+  roleLabel: string;
+  userType: string | null; // "internal" | "external"
+  org: string;
+  orgId: string | null;
+  active: boolean; // !banned
+  lastAccess: string; // texto relativo ("hace 3 días")
+}
+
+export interface UsersData {
+  users: AdminUserRow[];
+  /** Opciones del filtro Rol: salen de role_definitions, NO se hardcodean. */
+  roles: { key: string; label: string; userType: string | null }[];
+  /** Opciones del filtro Organización. */
+  orgs: { id: string; name: string }[];
+  total: number;
+}
+
+/**
+ * Usuarios de la org con su ROL EN LA ORGANIZACIÓN. El vínculo usuario↔org↔rol
+ * vive en `01_auth_member` (member.role = role_key); el rol global `user.role`
+ * NO se usa para esto. La etiqueta del rol sale de role_definitions cruzando por
+ * (role_key, organization_id). Las opciones de filtro (roles, orgs) también son
+ * datos reales, no listas hardcodeadas.
+ */
+export async function getUsers(): Promise<UsersData> {
+  // Opciones de filtro: roles (por role_key, deduplicado) y orgs.
+  const roleRows = await db
+    .select({ key: roleDefinitions.roleKey, label: roleDefinitions.displayName, userType: roleDefinitions.userType })
+    .from(roleDefinitions)
+    .orderBy(roleDefinitions.sortOrder);
+  const rolesByKey = new Map<string, { key: string; label: string; userType: string | null }>();
+  for (const r of roleRows) {
+    if (r.key && !rolesByKey.has(r.key)) rolesByKey.set(r.key, { key: r.key, label: r.label ?? r.key, userType: r.userType });
+  }
+  const orgRows = await db
+    .select({ id: organization.id, name: organization.name })
+    .from(organization)
+    .orderBy(organization.createdAt);
+
+  // Último acceso por usuario (max de session.created_at).
+  const lastRows = await db
+    .select({ uid: session.userId, last: sql<string | null>`max(${session.createdAt})` })
+    .from(session)
+    .groupBy(session.userId);
+  const lastMap = new Map(lastRows.map((r) => [r.uid, r.last]));
+
+  // Usuarios + rol en la org (member) + etiqueta de rol (role_definitions).
+  const rows = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      banned: user.banned,
+      roleKey: member.role,
+      orgId: member.organizationId,
+      orgName: organization.name,
+      roleLabel: roleDefinitions.displayName,
+      defUserType: roleDefinitions.userType,
+      memberUserType: member.userType,
+    })
+    .from(user)
+    .leftJoin(member, eq(member.userId, user.id))
+    .leftJoin(organization, eq(organization.id, member.organizationId))
+    .leftJoin(
+      roleDefinitions,
+      and(eq(roleDefinitions.roleKey, member.role), eq(roleDefinitions.organizationId, member.organizationId))
+    )
+    .orderBy(asc(user.name));
+
+  const users: AdminUserRow[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name ?? "—",
+    email: r.email ?? "—",
+    roleKey: r.roleKey ?? null,
+    roleLabel: r.roleLabel ?? r.roleKey ?? "—",
+    userType: r.defUserType ?? r.memberUserType ?? null,
+    org: r.orgName ?? "—",
+    orgId: r.orgId ?? null,
+    active: !r.banned,
+    lastAccess: relativeTime(lastMap.get(r.id) ?? null),
+  }));
+
+  return {
+    users,
+    roles: [...rolesByKey.values()],
+    orgs: orgRows.map((o) => ({ id: o.id, name: o.name ?? "—" })),
+    total: users.length,
+  };
+}
+
+// ---------- Admin: Organizaciones (real) ----------
+export interface AdminOrgRow {
+  id: string;
+  name: string;
+  slug: string;
+  users: number;
+  activeModules: number;
+  createdAt: string; // dd/mm/aaaa
+}
+
+/**
+ * Organizaciones del ecosistema con sus contadores (miembros y módulos activos).
+ * Hoy hay 2 reales (A-ware® · Operaciones y la org de prueba). El alta/baja de
+ * orgs la gestiona Vintelarg, no el portal (de ahí el botón deshabilitado en la
+ * UI). Cuentas con subqueries correlacionadas para no traer filas de más.
+ */
+export async function getOrganizations(): Promise<AdminOrgRow[]> {
+  const orgRows = await db
+    .select({ id: organization.id, name: organization.name, slug: organization.slug, createdAt: organization.createdAt })
+    .from(organization)
+    .orderBy(organization.createdAt);
+
+  // Contadores por org (agregados agrupados, no subqueries correlacionadas).
+  const memberCounts = await db
+    .select({ org: member.organizationId, n: sql<number>`count(*)`.mapWith(Number) })
+    .from(member)
+    .groupBy(member.organizationId);
+  const moduleCounts = await db
+    .select({ org: organizationModules.organizationId, n: sql<number>`count(*)`.mapWith(Number) })
+    .from(organizationModules)
+    .where(eq(organizationModules.active, true))
+    .groupBy(organizationModules.organizationId);
+  const usersByOrg = new Map(memberCounts.map((r) => [r.org, r.n]));
+  const modulesByOrg = new Map(moduleCounts.map((r) => [r.org, r.n]));
+
+  return orgRows.map((o) => ({
+    id: o.id,
+    name: o.name ?? "—",
+    slug: o.slug ?? "—",
+    users: usersByOrg.get(o.id) ?? 0,
+    activeModules: modulesByOrg.get(o.id) ?? 0,
+    createdAt: shortDate(o.createdAt),
+  }));
+}
+
 // ---------- P11 Permisos: matriz roles×permisos (real; hoy vacía) ----------
 export interface PermissionMatrix {
   roles: { id: string; name: string; userType: string | null }[];
@@ -376,7 +545,9 @@ export async function getNavForUser(roleKey: string, orgId: string): Promise<Sec
   try {
     const allowed = await getAllowedResources(roleKey, orgId);
     const keys = landingForRole(roleKey) === "/home" ? ["shared:inicio", ...allowed] : allowed;
-    sections = sectionsFromKeys(keys);
+    // Override de href por rol (genérico): gerente → Reclamos/Tickets a placeholder
+    // CRM; Atención al Cliente conserva /atencion. No muta el catálogo.
+    sections = applyHrefOverrides(roleKey, sectionsFromKeys(keys));
     if (sections.length === 0) {
       console.error(`[portal] getNavForUser: sin secciones (role=${roleKey} org=${orgId}); menú mínimo`);
       return sectionsFromKeys(MIN_NAV_KEYS);

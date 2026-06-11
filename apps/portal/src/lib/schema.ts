@@ -13,6 +13,9 @@ import {
   date,
   char,
   jsonb,
+  numeric,
+  smallint,
+  bigint,
 } from "drizzle-orm/pg-core";
 
 // ---- CRM / Atención ----
@@ -63,6 +66,16 @@ export const organization = pgTable("01_auth_organization", {
   id: text("id").primaryKey(),
   name: text("name"),
   slug: text("slug"),
+  createdAt: timestamp("created_at"),
+});
+
+export const member = pgTable("01_auth_member", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id"),
+  userId: text("user_id"),
+  /** rol del usuario EN la organización (role_key). NO confundir con user.role. */
+  role: text("role"),
+  userType: text("user_type"),
   createdAt: timestamp("created_at"),
 });
 
@@ -122,4 +135,45 @@ export const fvRevendedora = pgTable("02_fv_revendedora", {
   estado: text("estado"),
   zona: char("zona"),
   vigencia: text("vigencia"),
+});
+
+// ---- Órdenes en curso (cascada de ventas, paso 2). Hoy vacías: la campaña en
+//      curso cae a NA hasta que se carguen. Subset de columnas que usa el portal.
+export const campaniaOrdenes = pgTable("03_campania_ordenes", {
+  id: integer("id").primaryKey(),
+  numeroOrden: bigint("numero_orden", { mode: "number" }),
+  anioCampania: integer("anio_campania"),
+  campania: char("campania"),
+  revendedoraNumero: integer("revendedora_numero"),
+  tipo: text("tipo"),
+  canal: text("canal"),
+  subCanal: text("sub_canal"),
+  origen: text("origen"),
+  estado: text("estado"),
+  zona: char("zona"),
+  gzEiNumero: integer("gz_ei_numero"),
+  division: smallint("division"),
+  importeSinImp: numeric("importe_sin_imp"),
+  importeConImp: numeric("importe_con_imp"),
+  unidades: numeric("unidades"),
+  cantLineas: smallint("cant_lineas"),
+  pagado: boolean("pagado"),
+  importePagado: numeric("importe_pagado"),
+  fechaIngreso: timestamp("fecha_ingreso", { withTimezone: true }),
+  fechaFacturacion: timestamp("fecha_facturacion", { withTimezone: true }),
+});
+
+export const campaniaOrdenesDetalle = pgTable("03_campania_ordenes_detalle", {
+  id: integer("id").primaryKey(),
+  ordenId: integer("orden_id"),
+  nroLinea: smallint("nro_linea"),
+  codigoArticulo: text("codigo_articulo"),
+  descripcion: text("descripcion"),
+  rubro: smallint("rubro"),
+  unidades: numeric("unidades"),
+  precioUnitSinImp: numeric("precio_unit_sin_imp"),
+  precioUnitConImp: numeric("precio_unit_con_imp"),
+  importeLineaSinImp: numeric("importe_linea_sin_imp"),
+  importeLineaConImp: numeric("importe_linea_con_imp"),
+  estadoLinea: text("estado_linea"),
 });
