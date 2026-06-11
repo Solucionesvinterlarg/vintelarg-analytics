@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { SeguimientoView } from "@/features/emprendedora/seguimiento-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Seguimiento de Pedido" />;
+  return <SeguimientoView />;
 }

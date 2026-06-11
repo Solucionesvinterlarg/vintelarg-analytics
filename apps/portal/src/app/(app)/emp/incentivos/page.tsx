@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { IncentivosView } from "@/features/emprendedora/incentivos-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Mis Incentivos" />;
+  return <IncentivosView />;
 }
