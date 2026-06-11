@@ -75,7 +75,7 @@ export function PhoneShell({
           {tabs.map((t) => {
             const on = isActive(t.href);
             return (
-              <Link key={t.id} href={t.href} className="emp-press flex flex-1 flex-col items-center gap-[3px] py-2" style={{ color: on ? "var(--aw-violet)" : "var(--fg-subtle)" }}>
+              <Link key={t.id} href={t.href} prefetch={false} className="emp-press flex flex-1 flex-col items-center gap-[3px] py-2" style={{ color: on ? "var(--aw-violet)" : "var(--fg-subtle)" }}>
                 <LucideIcon name={t.icon} size={22} strokeWidth={on ? 2.4 : 2} />
                 <span className="text-[10px]" style={{ fontWeight: on ? 700 : 600 }}>{t.name}</span>
               </Link>
@@ -163,7 +163,7 @@ function Drawer({ items, user, onClose }: { items: Section[]; user: { name: stri
         {/* items */}
         <div className="flex flex-col p-2.5">
           {items.map((it) => (
-            <Link key={it.id} href={it.href} onClick={onClose} className="emp-press flex items-center gap-3.5 rounded-xl px-3 py-3 text-foreground">
+            <Link key={it.id} href={it.href} prefetch={false} onClick={onClose} className="emp-press flex items-center gap-3.5 rounded-xl px-3 py-3 text-foreground">
               <LucideIcon name={it.icon} size={20} strokeWidth={2} className="text-[var(--aw-violet)]" />
               <span className="flex-1 text-[14px] font-semibold">{it.name}</span>
               <ChevronRight size={16} className="text-muted-foreground" />

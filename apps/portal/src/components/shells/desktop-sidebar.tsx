@@ -58,6 +58,7 @@ export function DesktopSidebar({
           const link = (
             <Link
               href={it.href}
+              prefetch={false}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "relative flex items-center gap-3 rounded-lg text-[13px] transition-colors",

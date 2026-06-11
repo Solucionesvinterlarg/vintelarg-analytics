@@ -29,7 +29,7 @@ export function MobileBottomNav({ tabs }: { tabs: Section[] }) {
       {tabs.map((t) => {
         const active = pathname === t.href.split("#")[0] && !t.href.includes("#");
         return (
-          <Link key={t.id} href={t.href} className={cls(active)} aria-current={active ? "page" : undefined}>
+          <Link key={t.id} href={t.href} prefetch={false} className={cls(active)} aria-current={active ? "page" : undefined}>
             <LucideIcon name={t.icon} size={22} />
             <span>{t.name}</span>
           </Link>
