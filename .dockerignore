@@ -1,0 +1,45 @@
+# Dependencias — se reinstalan dentro del build
+node_modules
+**/node_modules
+
+# Builds de Next
+.next
+**/.next
+out
+**/out
+
+# Secretos y entornos — NUNCA copiar al build
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
+# Git y metadata
+.git
+.gitignore
+**/.git
+
+# Tests / herramientas de dev
+.playwright-mcp
+**/*.test.ts
+**/*.spec.ts
+coverage
+**/coverage
+
+# Empaquetados / dumps que no van a la imagen
+*.tar.gz
+*.zip
+*.xlsx
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+**/*.log
+
+# Docs (no necesarias en runtime)
+doc
+docs
+*.md
+!README.md
