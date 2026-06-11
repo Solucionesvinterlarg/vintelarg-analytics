@@ -70,7 +70,10 @@ export function normalizeRole(raw: string | undefined | null): Role {
 export const LANDING_BY_ROLE: Record<Role, string> = {
   admin: "/admin",
   gerente_comercial: "/dashboard",
-  atencion_cliente: "/atencion",
+  // Atención al cliente: su trabajo de tickets/reclamos vive en el módulo CRM;
+  // en el portal aterriza en Fuerza de ventas (1er ítem de su menú). /atencion
+  // ya no es su landing ni está en su menú.
+  atencion_cliente: "/dashboard/fuerza-ventas",
   comercial: "/dashboard",
   marketing: "/dashboard",
   cuentas_corrientes: "/inicio",
@@ -319,6 +322,9 @@ export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> 
   cuentas_corrientes: { "sat:crm": "/dashboard/crm" },
   administracion: { "sat:crm": "/dashboard/crm" },
   deposito: { "sat:crm": "/dashboard/crm" },
+  // Atención al cliente: CRM Contactos → placeholder. Tickets/Reclamos son
+  // navegación interna del módulo CRM, NO ítems del portal.
+  atencion_cliente: { "sat:crm": "/dashboard/crm" },
 };
 
 /**
