@@ -23,6 +23,14 @@ export async function GET(req: NextRequest) {
   const verifier = req.cookies.get("oidc_verifier")?.value;
 
   if (!code || !state || !stateCookie || state !== stateCookie || !verifier) {
+    // [DIAG temporal] qué condición exacta disparó el invalid_state.
+    console.error("[diag][oidc] invalid_state", {
+      hasCode: !!code,
+      hasState: !!state,
+      hasStateCookie: !!stateCookie,
+      stateMatch: state === stateCookie,
+      hasVerifier: !!verifier,
+    });
     return errorRedirect("invalid_state");
   }
 
