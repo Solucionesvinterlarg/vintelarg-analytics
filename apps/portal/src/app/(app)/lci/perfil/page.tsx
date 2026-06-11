@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciPerfilView } from "@/features/lci/perfil-view";
 
 export default function Page() {
-  return <LciSoon title="Mi perfil" />;
+  return <LciPerfilView />;
 }

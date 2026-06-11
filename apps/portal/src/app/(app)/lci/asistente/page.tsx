@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciAsistenteView } from "@/features/lci/asistente-view";
 
 export default function Page() {
-  return <LciSoon title="Asistente IA" />;
+  return <LciAsistenteView />;
 }

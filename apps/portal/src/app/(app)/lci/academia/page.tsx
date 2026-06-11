@@ -1,5 +1,6 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciAcademiaView } from "@/features/lci/academia-view";
 
+// Academia = app externa (ingreso, sin badge MOCK). Override shared:academia.
 export default function Page() {
-  return <LciSoon title="Academia A·ware" />;
+  return <LciAcademiaView />;
 }
