@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciReportesView } from "@/features/lci/reportes-view";
 
 export default function Page() {
-  return <LciSoon title="Reportes de líder" />;
+  return <LciReportesView />;
 }
