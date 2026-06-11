@@ -25,7 +25,7 @@ const QUICK_LCI = [
 export default async function MobileHomePage() {
   const user = await getCurrentUser();
   const role = normalizeRole(user?.role);
-  const isLci = role === "lci";
+  const isLci = role === "lci_lider";
   const [campaign, contact] = await Promise.all([
     getCurrentCampaign(),
     user ? getContactForUser(user.id) : Promise.resolve(null),

@@ -27,7 +27,7 @@ export type Role =
   | "cuentas_corrientes"
   | "administracion"
   | "deposito"
-  | "lci"
+  | "lci_lider"
   | "emprendedor";
 
 /** Normaliza el claim de rol del IdP a un Role canónico. Fallback: emprendedor. */
@@ -54,10 +54,11 @@ export function normalizeRole(raw: string | undefined | null): Role {
     deposito: "deposito",
     "depósito": "deposito",
     almacen: "deposito",
-    lci: "lci",
-    lider: "lci",
-    lider_comercial: "lci",
-    lider_comercial_independiente: "lci",
+    lci: "lci_lider",
+    lci_lider: "lci_lider",
+    lider: "lci_lider",
+    lider_comercial: "lci_lider",
+    lider_comercial_independiente: "lci_lider",
     emprendedor: "emprendedor",
     emprendedora: "emprendedor",
     revendedor: "emprendedor",
@@ -79,7 +80,7 @@ export const LANDING_BY_ROLE: Record<Role, string> = {
   cuentas_corrientes: "/inicio",
   administracion: "/inicio",
   deposito: "/inicio",
-  lci: "/home",
+  lci_lider: "/lci/inicio",
   emprendedor: "/emp/inicio",
 };
 
@@ -90,7 +91,7 @@ export function landingForRole(raw: string | undefined | null): string {
 /**
  * Audiencia "red comercial" (app mobile con shell phone) vs interna (shell
  * sidebar). Resuelto por rol server-side (no por usuario, no if-rol en el
- * render): el shell lo elige el layout. lci se suma en su propio bloque.
+ * render): el shell lo elige el layout. lci_lider es desktop (sidebar), NO phone.
  */
 const PHONE_AUDIENCE: Partial<Record<Role, true>> = { emprendedor: true };
 export function isPhoneAudience(raw: string | undefined | null): boolean {
@@ -107,7 +108,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   cuentas_corrientes: "Cuentas Corrientes",
   administracion: "Administración",
   deposito: "Depósito",
-  lci: "Líder Comercial",
+  lci_lider: "Líder Comercial",
   emprendedor: "Emprendedora",
 };
 
@@ -205,16 +206,20 @@ export const SECTION_CATALOG: Record<string, Section> = {
   "sat:crm": { id: "sat:crm", icon: "user-search", name: "CRM Contactos", href: "/atencion#crm", primary: true, module: "crm" },
   "sat:pedidos-app": { id: "sat:pedidos-app", icon: "smartphone", name: "Pedidos App", href: "/atencion#pedidos-app", module: "commerce" },
 
-  // ---- red (líderes / LCI) → módulo sales_force ----
-  "red:dashboard-lideres": { id: "red:dashboard-lideres", icon: "layout-dashboard", name: "Dashboard líderes", href: "/home#lideres", module: "sales_force" },
-  "red:performance-campania": { id: "red:performance-campania", icon: "bar-chart-3", name: "Campaña", href: "/home#campana", primary: true, module: "sales_force" },
-  "red:mi-red": { id: "red:mi-red", icon: "users", name: "Mi red", href: "/home#red", primary: true, module: "sales_force" },
-  "red:detalle-revendedora": { id: "red:detalle-revendedora", icon: "user-search", name: "Detalle revendedora", href: "/home#revendedora", module: "sales_force" },
-  "red:pedido-woe": { id: "red:pedido-woe", icon: "package", name: "Pedido WOE", href: "/home#pedido-woe", module: "sales_force" },
-  "red:simulador-titulos": { id: "red:simulador-titulos", icon: "calculator", name: "Simulador de títulos", href: "/home#simulador", module: "sales_force" },
-  "red:bonificacion": { id: "red:bonificacion", icon: "wallet", name: "Bonificación", href: "/home#bonificacion", primary: true, module: "sales_force" },
-  "red:plan-lucero": { id: "red:plan-lucero", icon: "star", name: "Plan Lucero", href: "/home#plan-lucero", module: "sales_force" },
-  "red:reportes-lider": { id: "red:reportes-lider", icon: "file-text", name: "Reportes de líder", href: "/home#reportes-lider", module: "sales_force" },
+  // ---- lci (consola DESKTOP del Líder Comercial Independiente) — recursos del
+  //      catálogo, rutas /lci/*. Render en AppShell desktop (sidebar). MOCK Lote 2.
+  "lci:inicio": { id: "lci:inicio", icon: "home", name: "Inicio", href: "/lci/inicio", primary: true },
+  "lci:campana": { id: "lci:campana", icon: "bar-chart-3", name: "Campaña", href: "/lci/campana" },
+  "lci:red": { id: "lci:red", icon: "users", name: "Mi red", href: "/lci/red" },
+  "lci:bonificacion": { id: "lci:bonificacion", icon: "receipt", name: "Bonificación", href: "/lci/bonificacion" },
+  "lci:dashboard": { id: "lci:dashboard", icon: "layout-dashboard", name: "Dashboard líderes", href: "/lci/dashboard" },
+  "lci:revendedora": { id: "lci:revendedora", icon: "user-search", name: "Detalle revendedora", href: "/lci/revendedora" },
+  "lci:pedido-woe": { id: "lci:pedido-woe", icon: "package", name: "Pedido WOE", href: "/lci/pedido-woe" },
+  "lci:simulador": { id: "lci:simulador", icon: "calculator", name: "Simulador de títulos", href: "/lci/simulador" },
+  "lci:plan-lucero": { id: "lci:plan-lucero", icon: "star", name: "Plan Lucero", href: "/lci/plan-lucero" },
+  "lci:reportes": { id: "lci:reportes", icon: "file-text", name: "Reportes de líder", href: "/lci/reportes" },
+  "lci:asistente": { id: "lci:asistente", icon: "bot", name: "Asistente IA", href: "/lci/asistente" },
+  "lci:perfil": { id: "lci:perfil", icon: "user", name: "Mi perfil", href: "/lci/perfil" },
 
   // ---- emp (app EMPRENDEDORA) — recursos del portal, rutas /emp/*. Son
   //      recursos ÚNICOS (cualquier rol los puede prender por matriz). El shell
@@ -261,9 +266,9 @@ export const SECTION_ORDER: string[] = [
   "ops:reclamos", "ops:tickets", "ops:pedidos", "ops:facturas", "ops:boletas",
   // sat
   "sat:crm", "sat:pedidos-app",
-  // red
-  "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
-  "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero", "red:reportes-lider",
+  // lci (consola desktop del líder) — orden del sidebar del handoff
+  "lci:inicio", "lci:campana", "lci:red", "lci:bonificacion", "lci:dashboard",
+  "lci:revendedora", "lci:pedido-woe", "lci:simulador", "lci:plan-lucero", "lci:reportes", "lci:asistente", "lci:perfil",
   // emp (app emprendedora) — tabs primero (Inicio/Pedidos/Logros/Perfil), resto al drawer
   "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
   "emp:finanzas", "emp:negocio", "emp:programas", "emp:incentivos",
@@ -306,10 +311,10 @@ export const ROLE_RESOURCE_KEYS: Record<Role, string[]> = {
   cuentas_corrientes: COMERCIAL_KEYS,
   administracion: COMERCIAL_KEYS,
   deposito: COMERCIAL_KEYS,
-  lci: [
-    "shared:inicio", "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
-    "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero",
-    "red:reportes-lider", "shared:academia", "shared:ai-agent", "shared:perfil",
+  lci_lider: [
+    "lci:inicio", "lci:campana", "lci:red", "lci:bonificacion", "lci:dashboard",
+    "lci:revendedora", "lci:pedido-woe", "lci:simulador", "lci:plan-lucero", "lci:reportes",
+    "lci:asistente", "lci:perfil", "shared:academia",
   ],
   emprendedor: [
     "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
@@ -351,6 +356,8 @@ export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> 
   // Emprendedora: Academia se abre como app EXTERNA (ingreso, no el grid del
   // gerente). Mismo criterio que CRM Contactos.
   emprendedor: { "shared:academia": "/emp/academia" },
+  // Líder Comercial: Academia = app externa (placeholder, no se maqueta el grid).
+  lci_lider: { "shared:academia": "/lci/academia" },
 };
 
 /**
