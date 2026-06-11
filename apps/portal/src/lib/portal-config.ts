@@ -80,11 +80,21 @@ export const LANDING_BY_ROLE: Record<Role, string> = {
   administracion: "/inicio",
   deposito: "/inicio",
   lci: "/home",
-  emprendedor: "/home",
+  emprendedor: "/emp/inicio",
 };
 
 export function landingForRole(raw: string | undefined | null): string {
   return LANDING_BY_ROLE[normalizeRole(raw)];
+}
+
+/**
+ * Audiencia "red comercial" (app mobile con shell phone) vs interna (shell
+ * sidebar). Resuelto por rol server-side (no por usuario, no if-rol en el
+ * render): el shell lo elige el layout. lci se suma en su propio bloque.
+ */
+const PHONE_AUDIENCE: Partial<Record<Role, true>> = { emprendedor: true };
+export function isPhoneAudience(raw: string | undefined | null): boolean {
+  return !!PHONE_AUDIENCE[normalizeRole(raw)];
 }
 
 /** Etiqueta legible del rol para el footer del sidebar / avatar. */
@@ -206,13 +216,22 @@ export const SECTION_CATALOG: Record<string, Section> = {
   "red:plan-lucero": { id: "red:plan-lucero", icon: "star", name: "Plan Lucero", href: "/home#plan-lucero", module: "sales_force" },
   "red:reportes-lider": { id: "red:reportes-lider", icon: "file-text", name: "Reportes de líder", href: "/home#reportes-lider", module: "sales_force" },
 
-  // ---- emp (emprendedora) → commerce, salvo reclamos (returns) ----
-  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Catálogo", href: "/home#catalogo", primary: true, module: "commerce" },
-  "emp:mis-pedidos": { id: "emp:mis-pedidos", icon: "package", name: "Pedidos", href: "/home#pedidos", primary: true, module: "commerce" },
-  "emp:mi-cuenta": { id: "emp:mi-cuenta", icon: "wallet", name: "Cuenta", href: "/home#cuenta", primary: true, module: "commerce" },
-  "emp:mis-reclamos": { id: "emp:mis-reclamos", icon: "refresh-ccw", name: "Cambios y reclamos", href: "/home#reclamos", desc: "Crear o consultar", tint: TINT.amber, module: "returns" },
-  "emp:mis-facturas": { id: "emp:mis-facturas", icon: "file-text", name: "Mis facturas", href: "/home#facturas", desc: "Consultar facturas emitidas", tint: TINT.blue, module: "commerce" },
-  "emp:mis-boletas": { id: "emp:mis-boletas", icon: "receipt", name: "Boletas de pago", href: "/home#boletas", desc: "Ver boletas y vencimientos", tint: TINT.green, module: "commerce" },
+  // ---- emp (app EMPRENDEDORA) — recursos del portal, rutas /emp/*. Son
+  //      recursos ÚNICOS (cualquier rol los puede prender por matriz). El shell
+  //      "phone" los presenta como bottom-tabs (primary) + drawer (resto).
+  "emp:inicio": { id: "emp:inicio", icon: "home", name: "Inicio", href: "/emp/inicio", primary: true },
+  "emp:catalogo": { id: "emp:catalogo", icon: "shopping-bag", name: "Pedidos", href: "/emp/catalogo", primary: true },
+  "emp:logros": { id: "emp:logros", icon: "trophy", name: "Logros", href: "/emp/logros", primary: true },
+  "emp:perfil": { id: "emp:perfil", icon: "user", name: "Perfil", href: "/emp/perfil", primary: true },
+  "emp:finanzas": { id: "emp:finanzas", icon: "wallet", name: "Mis Finanzas", href: "/emp/finanzas" },
+  "emp:negocio": { id: "emp:negocio", icon: "bar-chart-3", name: "Mi Negocio", href: "/emp/negocio" },
+  "emp:programas": { id: "emp:programas", icon: "gift", name: "Programas & Beneficios", href: "/emp/programas" },
+  "emp:incentivos": { id: "emp:incentivos", icon: "target", name: "Mis Incentivos", href: "/emp/incentivos" },
+  "emp:seguimiento": { id: "emp:seguimiento", icon: "truck", name: "Seguimiento Pedidos", href: "/emp/seguimiento" },
+  "emp:indicaciones": { id: "emp:indicaciones", icon: "users", name: "Mis Indicaciones", href: "/emp/indicaciones" },
+  "emp:onboarding": { id: "emp:onboarding", icon: "compass", name: "Onboarding", href: "/emp/onboarding" },
+  "emp:reclamos": { id: "emp:reclamos", icon: "message-square-warning", name: "Reclamos", href: "/emp/reclamos" },
+  "emp:novedades": { id: "emp:novedades", icon: "bell", name: "Novedades", href: "/emp/novedades" },
 
   // ---- shared (transversales; en mobile caen al sheet "Más") ----
   "shared:academia": { id: "shared:academia", icon: "graduation-cap", name: "Academia", href: "/academia", desc: "Cursos y materiales", tint: TINT.violet, module: "lms" },
@@ -245,8 +264,10 @@ export const SECTION_ORDER: string[] = [
   // red
   "red:dashboard-lideres", "red:performance-campania", "red:mi-red", "red:bonificacion",
   "red:detalle-revendedora", "red:pedido-woe", "red:simulador-titulos", "red:plan-lucero", "red:reportes-lider",
-  // emp
-  "emp:catalogo", "emp:mis-pedidos", "emp:mi-cuenta", "emp:mis-reclamos", "emp:mis-facturas", "emp:mis-boletas",
+  // emp (app emprendedora) — tabs primero (Inicio/Pedidos/Logros/Perfil), resto al drawer
+  "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
+  "emp:finanzas", "emp:negocio", "emp:programas", "emp:incentivos",
+  "emp:seguimiento", "emp:indicaciones", "emp:onboarding", "emp:reclamos", "emp:novedades",
   // shared (resto)
   "shared:academia", "shared:ai-agent", "shared:notificaciones", "shared:perfil",
 ];
@@ -291,8 +312,10 @@ export const ROLE_RESOURCE_KEYS: Record<Role, string[]> = {
     "red:reportes-lider", "shared:academia", "shared:ai-agent", "shared:perfil",
   ],
   emprendedor: [
-    "shared:inicio", "emp:catalogo", "emp:mis-pedidos", "emp:mi-cuenta", "emp:mis-reclamos",
-    "emp:mis-facturas", "emp:mis-boletas", "shared:academia", "shared:ai-agent", "shared:perfil",
+    "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
+    "emp:finanzas", "emp:negocio", "emp:programas", "emp:incentivos",
+    "emp:seguimiento", "emp:indicaciones", "emp:reclamos", "emp:novedades", "emp:onboarding",
+    "shared:academia",
   ],
 };
 

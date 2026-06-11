@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { userInitials } from "@/lib/session-token";
-import { normalizeRole, ROLE_LABEL, tabsFromSections, extrasFromSections } from "@/lib/portal-config";
+import { normalizeRole, ROLE_LABEL, tabsFromSections, extrasFromSections, isPhoneAudience } from "@/lib/portal-config";
 import { getNavForUser } from "@/lib/queries";
 import { AppShell } from "@/components/shells/app-shell";
+import { PhoneShell } from "@/components/shells/phone-shell";
 
 /**
  * Layout único del portal. El shell es responsive (sidebar ≥768px / tabs
@@ -17,13 +18,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const role = normalizeRole(user.role);
   const nav = await getNavForUser(role, user.orgId);
+  const shellUser = { name: user.name || "Usuario", role: ROLE_LABEL[role], initials: userInitials(user.name) || "AW" };
+
+  // Shell por AUDIENCIA (no por rol-individual, sin if-rol en el render): red
+  // comercial → phone; internos → sidebar. La misma pantalla (recurso único)
+  // renderiza en el shell del viewer.
+  if (isPhoneAudience(role)) {
+    return (
+      <PhoneShell tabs={tabsFromSections(nav)} drawerItems={nav.filter((s) => s.id !== "emp:inicio" && s.id !== "emp:perfil")} user={shellUser}>
+        {children}
+      </PhoneShell>
+    );
+  }
 
   return (
     <AppShell
       nav={nav}
       tabs={tabsFromSections(nav)}
       extras={extrasFromSections(nav)}
-      user={{ name: user.name || "Usuario", role: ROLE_LABEL[role], initials: userInitials(user.name) || "AW" }}
+      user={shellUser}
       version={`v1.2.0 · ${ROLE_LABEL[role]}`}
     >
       {children}
