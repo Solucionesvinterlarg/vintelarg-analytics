@@ -42,6 +42,17 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Commit deployado, bakeado en build-time. Se pasa como --build-arg desde Dokploy
+# (Build-time Arguments). Queda visible en runtime vía /api/version y como label
+# OCI de la imagen (docker inspect). Default "unknown" para no romper el build si
+# no se pasa. El .git NO está en el contexto (.dockerignore), por eso es build-arg
+# y no se resuelve con `git` adentro de la imagen.
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ENV GIT_SHA=$GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
+LABEL org.opencontainers.image.revision=$GIT_SHA
+
 # Usuario no-root por seguridad
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
