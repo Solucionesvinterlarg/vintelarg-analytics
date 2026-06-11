@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { FinanzasView } from "@/features/emprendedora/finanzas-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Mis Finanzas" />;
+  return <FinanzasView />;
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Bot, Menu, X, Send, MessageCircle, LogOut, Sun, Moon, ChevronRight, Crown } from "lucide-react";
+import { Bot, Menu, X, Send, MessageCircle, LogOut, Sun, Moon, ChevronRight, Crown, Tag, Percent, Truck, Share2 } from "lucide-react";
 import { LucideIcon } from "@/components/portal/lucide-icon";
 import { useEmpStore } from "@/lib/emp-store";
 import type { Section } from "@/lib/portal-config";
@@ -32,6 +32,9 @@ export function PhoneShell({
   const clearToast = useEmpStore((s) => s.clearToast);
   const drawer = useEmpStore((s) => s.drawer);
   const setDrawer = useEmpStore((s) => s.setDrawer);
+  const celebrate = useEmpStore((s) => s.celebrate);
+  const setCelebrate = useEmpStore((s) => s.setCelebrate);
+  const notify = useEmpStore((s) => s.notify);
 
   useEffect(() => {
     if (!toast) return;
@@ -100,6 +103,38 @@ export function PhoneShell({
 
         {/* Bot panel */}
         {bot && <BotPanel onClose={() => setBot(false)} />}
+
+        {/* Celebración de logro */}
+        {celebrate && <Celebration onClose={() => setCelebrate(false)} notify={notify} />}
+      </div>
+    </div>
+  );
+}
+
+const CONFETTI = ["#685BC7", "#C98A2B", "#3F8F5E", "#D79496", "#4B6C76"];
+
+function Celebration({ onClose, notify }: { onClose: () => void; notify: (m: string) => void }) {
+  return (
+    <div className="absolute inset-0 z-40 grid place-items-center overflow-hidden p-6" style={{ background: "rgba(19,21,25,0.62)", animation: "emp-fade-in .25s" }}>
+      {Array.from({ length: 28 }).map((_, i) => (
+        <span key={i} className="absolute -top-5 size-[8px]" style={{ left: `${(i * 3.7) % 100}%`, height: 12, background: CONFETTI[i % CONFETTI.length], borderRadius: 2, animation: `emp-confetti ${1.6 + (i % 5) * 0.3}s linear ${(i % 7) * 0.12}s infinite` }} />
+      ))}
+      <div className="relative w-full max-w-[340px] rounded-3xl p-7 text-center" style={{ background: "var(--aw-app-bg)", boxShadow: "var(--shadow-lg)", animation: "emp-pop .5s var(--ease-spring)" }}>
+        <div className="mx-auto grid size-[84px] place-items-center rounded-full text-white" style={{ background: "var(--aw-violet)", boxShadow: "var(--shadow-violet)" }}><Crown size={42} /></div>
+        <div className="mt-4 text-[13px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--aw-violet)" }}>¡Felicitaciones!</div>
+        <div className="mt-1.5 text-[21px] font-extrabold leading-tight tracking-[-0.02em] text-foreground">Alcanzaste<br />Emprendedora VIP</div>
+        <div className="mt-4 flex flex-col gap-2.5 text-left">
+          {[{ Icon: Tag, t: "Zona Outlet desbloqueada" }, { Icon: Percent, t: "Comisión +2% en tus ventas" }, { Icon: Truck, t: "Envíos gratis" }].map((b) => (
+            <div key={b.t} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--aw-white)", border: "1px solid var(--aw-hairline)" }}>
+              <span className="grid size-8 flex-none place-items-center rounded-full" style={{ background: "var(--aw-violet-light)", color: "var(--aw-violet)" }}><b.Icon size={17} /></span>
+              <span className="text-[13px] font-semibold text-foreground">{b.t}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex gap-2.5">
+          <button type="button" onClick={() => notify("Compartiendo…")} className="emp-press flex flex-1 items-center justify-center gap-1.5 rounded-full py-3 text-[14px] font-bold text-foreground" style={{ background: "var(--aw-white)", border: "1px solid var(--aw-hairline)" }}><Share2 size={17} /> Compartir</button>
+          <button type="button" onClick={onClose} className="emp-press flex flex-1 items-center justify-center rounded-full py-3 text-[14px] font-bold text-white" style={{ background: "var(--aw-violet)" }}>Continuar</button>
+        </div>
       </div>
     </div>
   );

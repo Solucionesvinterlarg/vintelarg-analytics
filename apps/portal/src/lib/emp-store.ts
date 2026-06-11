@@ -12,10 +12,12 @@ interface EmpState {
   cartCount: number;
   toast: { id: number; msg: string } | null;
   drawer: boolean;
+  celebrate: boolean;
   addToCart: (name?: string) => void;
   notify: (msg: string) => void;
   clearToast: () => void;
   setDrawer: (open: boolean) => void;
+  setCelebrate: (open: boolean) => void;
 }
 
 let toastSeq = 1;
@@ -26,10 +28,12 @@ export const useEmpStore = create<EmpState>()(
       cartCount: 3,
       toast: null,
       drawer: false,
+      celebrate: false,
       addToCart: (name) => set({ cartCount: get().cartCount + 1, toast: { id: toastSeq++, msg: `${name ?? "Producto"} · agregado` } }),
       notify: (msg) => set({ toast: { id: toastSeq++, msg } }),
       clearToast: () => set({ toast: null }),
       setDrawer: (open) => set({ drawer: open }),
+      setCelebrate: (open) => set({ celebrate: open }),
     }),
     {
       name: "emp-store",

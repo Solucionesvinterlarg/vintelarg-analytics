@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { LogrosView } from "@/features/emprendedora/logros-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Mis Logros" />;
+  return <LogrosView />;
 }
