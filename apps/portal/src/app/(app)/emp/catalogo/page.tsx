@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { CatalogoView } from "@/features/emprendedora/catalogo-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Carga tu Pedido" />;
+  return <CatalogoView />;
 }
