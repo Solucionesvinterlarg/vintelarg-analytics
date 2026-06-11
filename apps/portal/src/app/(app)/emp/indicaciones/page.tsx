@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { IndicacionesView } from "@/features/emprendedora/indicaciones-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Mis Indicaciones" />;
+  return <IndicacionesView />;
 }

@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { ReclamosView } from "@/features/emprendedora/reclamos-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Reclamos" />;
+  return <ReclamosView />;
 }

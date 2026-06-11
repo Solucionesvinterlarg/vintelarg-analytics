@@ -1,6 +1,5 @@
-import { EmpSoon } from "@/features/emprendedora/emp-soon";
+import { OnboardingView } from "@/features/emprendedora/onboarding-view";
 
-// App emprendedora — pantalla en sub-bloque posterior (placeholder navegable).
 export default function Page() {
-  return <EmpSoon title="Mi Programa Onboarding" />;
+  return <OnboardingView />;
 }

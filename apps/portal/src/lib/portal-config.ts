@@ -348,6 +348,9 @@ export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> 
   // Atención al cliente: CRM Contactos → placeholder. Tickets/Reclamos son
   // navegación interna del módulo CRM, NO ítems del portal.
   atencion_cliente: { "sat:crm": "/dashboard/crm" },
+  // Emprendedora: Academia se abre como app EXTERNA (ingreso, no el grid del
+  // gerente). Mismo criterio que CRM Contactos.
+  emprendedor: { "shared:academia": "/emp/academia" },
 };
 
 /**
