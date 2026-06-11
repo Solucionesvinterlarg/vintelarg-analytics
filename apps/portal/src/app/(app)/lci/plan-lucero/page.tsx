@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciPlanLuceroView } from "@/features/lci/plan-lucero-view";
 
 export default function Page() {
-  return <LciSoon title="Plan Lucero" />;
+  return <LciPlanLuceroView />;
 }

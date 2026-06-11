@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciPedidoWoeView } from "@/features/lci/pedido-woe-view";
 
 export default function Page() {
-  return <LciSoon title="Pedido WOE" />;
+  return <LciPedidoWoeView />;
 }
