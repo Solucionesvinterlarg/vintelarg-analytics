@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciMiRedView } from "@/features/lci/mi-red-view";
 
 export default function Page() {
-  return <LciSoon title="Mi red" />;
+  return <LciMiRedView />;
 }

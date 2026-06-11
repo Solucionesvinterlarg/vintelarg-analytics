@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciRevendedoraView } from "@/features/lci/revendedora-view";
 
 export default function Page() {
-  return <LciSoon title="Detalle revendedora" />;
+  return <LciRevendedoraView />;
 }
