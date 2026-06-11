@@ -73,9 +73,9 @@ export const LANDING_BY_ROLE: Record<Role, string> = {
   atencion_cliente: "/atencion",
   comercial: "/dashboard",
   marketing: "/dashboard",
-  cuentas_corrientes: "/dashboard",
-  administracion: "/dashboard",
-  deposito: "/dashboard",
+  cuentas_corrientes: "/inicio",
+  administracion: "/inicio",
+  deposito: "/inicio",
   lci: "/home",
   emprendedor: "/home",
 };
@@ -152,6 +152,10 @@ const TINT = {
 export const SECTION_CATALOG: Record<string, Section> = {
   // landing (no permisada; siempre disponible para la red comercial)
   "shared:inicio": { id: "shared:inicio", icon: "home", name: "Inicio", href: "/", primary: true },
+  // Inicio/Próximamente del back-office interno (teaser "acceso mínimo"). Es un
+  // recurso permisado por matriz (a diferencia de shared:inicio, que es el landing
+  // inyectado de la red comercial). Sin módulo: siempre disponible.
+  "shared:proximamente": { id: "shared:proximamente", icon: "sparkles", name: "Inicio", href: "/inicio", primary: true },
 
   // ---- admin ----
   "admin:panel": { id: "admin:panel", icon: "layout-dashboard", name: "Panel de control", href: "/admin", primary: true },
@@ -210,8 +214,10 @@ export const SECTION_CATALOG: Record<string, Section> = {
   // ---- shared (transversales; en mobile caen al sheet "Más") ----
   "shared:academia": { id: "shared:academia", icon: "graduation-cap", name: "Academia", href: "/academia", desc: "Cursos y materiales", tint: TINT.violet, module: "lms" },
   "shared:ai-agent": { id: "shared:ai-agent", icon: "bot", name: "Asistente IA", href: "/asistente", desc: "Ayuda inteligente", tint: TINT.violet, module: "ai_agent" },
-  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones", module: "mensajeria" },
-  "shared:perfil": { id: "shared:perfil", icon: "user", name: "Mi perfil", href: "/perfil", desc: "Datos personales y configuración", tint: TINT.neutral },
+  // Notificaciones y Mi perfil: pantallas core internas, siempre disponibles (sin
+  // gate de módulo) y primary (bottom-tabs del back-office en mobile).
+  "shared:notificaciones": { id: "shared:notificaciones", icon: "bell", name: "Notificaciones", href: "/notificaciones", primary: true },
+  "shared:perfil": { id: "shared:perfil", icon: "user", name: "Mi perfil", href: "/perfil", primary: true, desc: "Datos personales y configuración", tint: TINT.neutral },
 };
 
 /**
@@ -221,6 +227,7 @@ export const SECTION_CATALOG: Record<string, Section> = {
  */
 export const SECTION_ORDER: string[] = [
   "shared:inicio",
+  "shared:proximamente",
   // admin
   "admin:panel", "admin:usuarios", "admin:organizaciones", "admin:permisos", "admin:modulos", "admin:campanas",
   // dashboard
@@ -308,7 +315,44 @@ export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> 
     // CRM Contactos de comercial: placeholder del módulo CRM (no el /atencion real).
     "sat:crm": "/dashboard/crm",
   },
+  // Back-office interno: CRM Contactos → placeholder del módulo CRM.
+  cuentas_corrientes: { "sat:crm": "/dashboard/crm" },
+  administracion: { "sat:crm": "/dashboard/crm" },
+  deposito: { "sat:crm": "/dashboard/crm" },
 };
+
+/**
+ * Cosmético por rol para el teaser de Inicio/Próximamente del back-office
+ * (chips + frase). Resuelto server-side y pasado por prop a la vista (sin
+ * `if(rol)` en el render). El rol legible sale de ROLE_LABEL.
+ */
+export interface BoTeaser {
+  chips: string[];
+  hint: string;
+}
+export const BO_TEASER_BY_ROLE: Partial<Record<Role, BoTeaser>> = {
+  cuentas_corrientes: {
+    chips: ["cartera", "retenciones", "ajustes"],
+    hint: "Acá vas a ver la cartera de cuentas, las retenciones y los ajustes manuales del período.",
+  },
+  deposito: {
+    chips: ["stock", "picking", "despacho"],
+    hint: "Acá vas a gestionar el stock, el armado de pedidos (picking) y el despacho.",
+  },
+  administracion: {
+    chips: ["a definir"],
+    hint: "El alcance de esta sección se está definiendo con el equipo de Administración.",
+  },
+};
+
+const BO_TEASER_DEFAULT: BoTeaser = {
+  chips: ["próximamente"],
+  hint: "Las pantallas específicas de este perfil se definen en la próxima etapa.",
+};
+
+export function teaserForRole(raw: string | undefined | null): BoTeaser {
+  return BO_TEASER_BY_ROLE[normalizeRole(raw)] ?? BO_TEASER_DEFAULT;
+}
 
 /**
  * Aplica los overrides de href del rol sobre las secciones. Devuelve objetos
