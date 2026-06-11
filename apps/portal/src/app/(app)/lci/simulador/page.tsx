@@ -1,5 +1,5 @@
-import { LciSoon } from "@/features/lci/lci-soon";
+import { LciSimuladorView } from "@/features/lci/simulador-view";
 
 export default function Page() {
-  return <LciSoon title="Simulador de títulos" />;
+  return <LciSimuladorView />;
 }
