@@ -180,9 +180,9 @@ function Drawer({ items, user, onClose }: { items: Section[]; user: { name: stri
               <span className="absolute top-[3px] size-5 rounded-full bg-white transition-all" style={{ left: dark ? 23 : 3 }} />
             </button>
           </div>
-          <Link href="/api/auth/logout" className="emp-press flex items-center gap-3.5 rounded-xl px-3 py-3" style={{ color: "var(--aw-danger)" }}>
+          <a href="/api/auth/logout" className="emp-press flex items-center gap-3.5 rounded-xl px-3 py-3" style={{ color: "var(--aw-danger)" }}>
             <LogOut size={20} /><span className="text-[14px] font-bold">Salir</span>
-          </Link>
+          </a>
         </div>
       </div>
     </div>

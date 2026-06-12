@@ -18,21 +18,6 @@ export async function proxy(req: NextRequest) {
   const user = token ? await verifySessionToken(token) : null;
 
   if (!user) {
-    // [DIAG temporal] confirma si el proxy CORRE y es quien redirige a login
-    // (explicaría la ausencia de logs de session/render). hasCookie distingue
-    // "cookie no viajó" de "cookie presente pero JWT inválido en el proxy".
-    console.error("[diag][proxy] redirect→login", {
-      path: pathname,
-      hasCookie: !!token,
-      // TODAS las cookies que el browser mandó a ESTE host: si no aparece
-      // portal_session pero sí oidc_*, el problema es específico de esa cookie;
-      // si no aparece NINGUNA, el browser no manda cookies a este host.
-      cookies: req.cookies.getAll().map((c) => c.name),
-      reqHost: req.headers.get("host") ?? null,
-      xfProto: req.headers.get("x-forwarded-proto") ?? null,
-      rsc: req.headers.get("rsc") ?? null,
-      prefetch: req.headers.get("next-router-prefetch") ?? null,
-    });
     return NextResponse.redirect(new URL("/api/auth/login", req.url));
   }
   return NextResponse.next();

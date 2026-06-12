@@ -450,23 +450,16 @@ export interface OrgModule {
 
 /** Módulos registrados para la org (negocio + infra), ordenados por tipo y key. */
 export async function getOrganizationModules(orgId: string): Promise<OrgModule[]> {
-  try {
-    const rows = await db
-      .select({
-        moduleKey: organizationModules.moduleKey,
-        moduleType: organizationModules.moduleType,
-        active: organizationModules.active,
-      })
-      .from(organizationModules)
-      .where(eq(organizationModules.organizationId, orgId))
-      .orderBy(asc(organizationModules.moduleType), asc(organizationModules.moduleKey));
-    console.error(`[diag][getOrganizationModules] OK orgId=${orgId} filas=${rows.length}`);
-    return rows.map((r) => ({ moduleKey: r.moduleKey ?? "", moduleType: r.moduleType ?? "", active: !!r.active }));
-  } catch (err) {
-    // [DIAG temporal] stack completo si la query revienta (columna/tabla/conexión).
-    console.error(`[diag][getOrganizationModules] FALLÓ orgId=${orgId}:`, err);
-    throw err;
-  }
+  const rows = await db
+    .select({
+      moduleKey: organizationModules.moduleKey,
+      moduleType: organizationModules.moduleType,
+      active: organizationModules.active,
+    })
+    .from(organizationModules)
+    .where(eq(organizationModules.organizationId, orgId))
+    .orderBy(asc(organizationModules.moduleType), asc(organizationModules.moduleKey));
+  return rows.map((r) => ({ moduleKey: r.moduleKey ?? "", moduleType: r.moduleType ?? "", active: !!r.active }));
 }
 
 // ---------- P11 Permisos: grilla editable (catálogo × roles) ----------

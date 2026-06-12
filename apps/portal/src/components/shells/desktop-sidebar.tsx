@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LucideIcon } from "@/components/portal/lucide-icon";
 import { AwareMark } from "@/components/portal/aware-mark";
@@ -102,17 +102,24 @@ export function DesktopSidebar({
             {user.initials}
           </div>
           {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-bold">{user.name}</div>
-                <div className="text-[10px] text-[var(--aw-purple-300)]">{user.role}</div>
-              </div>
-              <Link href="/api/auth/logout" aria-label="Configuración / salir" className="text-white/50 hover:text-white">
-                <Settings size={14} strokeWidth={1.5} />
-              </Link>
-            </>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-bold">{user.name}</div>
+              <div className="text-[10px] text-[var(--aw-purple-300)]">{user.role}</div>
+            </div>
           )}
         </div>
+        {/* Cerrar sesión: <a> (no <Link>) = navegación de documento, no fetch RSC. */}
+        <a
+          href="/api/auth/logout"
+          aria-label="Cerrar sesión"
+          className={cn(
+            "mt-1 flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white",
+            collapsed ? "justify-center p-2.5" : "px-3 py-2"
+          )}
+        >
+          <LogOut size={collapsed ? 18 : 16} strokeWidth={1.5} className="shrink-0" />
+          {!collapsed && <span className="whitespace-nowrap">Cerrar sesión</span>}
+        </a>
       </div>
     </aside>
   );

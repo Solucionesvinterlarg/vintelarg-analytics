@@ -41,8 +41,6 @@ function present(moduleKey: string) {
 export default async function ModulosPage() {
   // Doble guarda: el layout autentica, pero esta pantalla es admin-only.
   const user = await getCurrentUser();
-  // [DIAG temporal] confirma que el render de /admin/modulos se alcanzó y con qué user.
-  console.error(`[diag][modulos] render user=${!!user} role=${user?.role ?? "-"} orgId=${user?.orgId ?? "-"}`);
   if (!user || normalizeRole(user.role) !== "admin") {
     return (
       <>
