@@ -10,6 +10,8 @@ import { SignJWT, jwtVerify } from "jose";
 export const SESSION_COOKIE = "portal_session";
 /** id_token del IdP, guardado para el RP-initiated logout (id_token_hint). */
 export const ID_TOKEN_COOKIE = "portal_id_token";
+/** access_token del IdP, guardado para consultar /api/portal/apps (Bearer). */
+export const ACCESS_TOKEN_COOKIE = "portal_access_token";
 const SESSION_TTL_SECONDS = 60 * 60 * 8; // 8 horas
 
 export interface PortalUser {

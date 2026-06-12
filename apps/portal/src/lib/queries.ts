@@ -22,6 +22,7 @@ import {
 } from "./schema";
 import type { BadgeTone } from "@/components/portal/badge";
 import { sectionsFromKeys, applyHrefOverrides, landingForRole, type Section } from "@/lib/portal-config";
+import { getModuleAppLinks } from "./idp-apps";
 
 // ============================================================================
 //  REGLA DE VENTAS (Gerente Comercial · Etapa 2) — anotada, aún sin implementar.
@@ -565,7 +566,21 @@ export async function getNavForUser(roleKey: string, orgId: string): Promise<Sec
   } catch (err) {
     console.error(`[portal] getActiveModules falló (org=${orgId}); sin cascada de módulos:`, err);
   }
-  if (!activeModules) return sections;
-  const active = activeModules;
-  return sections.filter((s) => !s.module || active.has(s.module));
+  let result: Section[];
+  if (!activeModules) {
+    result = sections;
+  } else {
+    const active = activeModules;
+    result = sections.filter((s) => !s.module || active.has(s.module));
+  }
+
+  // E2.1: ítems-módulo cuya app está disponible en el IdP abren su `uri` real
+  // (href absoluto → el shell lo renderiza como <a>). Falla suave (Map vacío) →
+  // se deja el href original del catálogo.
+  const appLinks = await getModuleAppLinks();
+  return result.map((s) => {
+    if (!s.module) return s;
+    const link = appLinks.get(s.module);
+    return link?.available ? { ...s, href: link.uri } : s;
+  });
 }

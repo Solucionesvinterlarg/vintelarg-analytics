@@ -54,18 +54,17 @@ export function DesktopSidebar({
           // Solo el ítem-ruta (sin ancla #) cuya ruta coincide queda activo;
           // los ítems con #ancla apuntan a secciones de la misma página y no se marcan.
           const active = !it.href.includes("#") && hrefBase(it.href) === pathname;
-          const link = (
-            <Link
-              href={it.href}
-              prefetch={false}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "relative flex items-center gap-3 rounded-lg text-[13px] transition-colors",
-                collapsed ? "justify-center p-2.5" : "px-3 py-2.5",
-                active ? "font-semibold text-white" : "font-medium text-white/70 hover:bg-white/[0.08]"
-              )}
-              style={active ? { background: "var(--aw-violet)" } : undefined}
-            >
+          // E2.1: href absoluto (app externa, ej. CRM) → <a> de navegación de
+          // documento (misma pestaña, sin Link/RSC ni prefetch). Relativos → <Link>.
+          const external = /^https?:\/\//.test(it.href);
+          const navClass = cn(
+            "relative flex items-center gap-3 rounded-lg text-[13px] transition-colors",
+            collapsed ? "justify-center p-2.5" : "px-3 py-2.5",
+            active ? "font-semibold text-white" : "font-medium text-white/70 hover:bg-white/[0.08]"
+          );
+          const navStyle = active ? { background: "var(--aw-violet)" } : undefined;
+          const inner = (
+            <>
               <span className="shrink-0" style={{ color: active ? "#fff" : "rgba(255,255,255,0.62)" }}>
                 <LucideIcon name={it.icon} size={18} />
               </span>
@@ -81,6 +80,15 @@ export function DesktopSidebar({
               {collapsed && it.badge && (
                 <span className="absolute right-2 top-1 size-2 rounded-full" style={{ background: it.badgeTone === "warn" ? "#E5A53C" : "#E5484D" }} />
               )}
+            </>
+          );
+          const link = external ? (
+            <a href={it.href} aria-current={active ? "page" : undefined} className={navClass} style={navStyle}>
+              {inner}
+            </a>
+          ) : (
+            <Link href={it.href} prefetch={false} aria-current={active ? "page" : undefined} className={navClass} style={navStyle}>
+              {inner}
             </Link>
           );
           return collapsed ? (

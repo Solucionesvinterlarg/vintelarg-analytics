@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeCodeForTokens, verifyIdToken, claimsToUser } from "@/lib/auth";
-import { createSessionToken, SESSION_COOKIE, ID_TOKEN_COOKIE, SESSION_MAX_AGE } from "@/lib/session-token";
+import { createSessionToken, SESSION_COOKIE, ID_TOKEN_COOKIE, ACCESS_TOKEN_COOKIE, SESSION_MAX_AGE } from "@/lib/session-token";
 import { landingForRole } from "@/lib/portal-config";
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:3002";
@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
     // id_token guardado para el RP-initiated logout (id_token_hint, requerido por
     // el end_session_endpoint del IdP).
     res.cookies.set(ID_TOKEN_COOKIE, tokens.id_token, cookieOpts);
+    // access_token guardado para consultar las apps-módulo del IdP
+    // (GET /api/portal/apps con Bearer) al armar el menú.
+    res.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token, cookieOpts);
     for (const c of ["oidc_state", "oidc_nonce", "oidc_verifier"]) {
       res.cookies.set(c, "", { path: "/", maxAge: 0 });
     }

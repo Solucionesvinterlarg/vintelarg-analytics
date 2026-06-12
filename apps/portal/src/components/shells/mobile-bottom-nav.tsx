@@ -28,10 +28,21 @@ export function MobileBottomNav({ tabs }: { tabs: Section[] }) {
     >
       {tabs.map((t) => {
         const active = pathname === t.href.split("#")[0] && !t.href.includes("#");
-        return (
-          <Link key={t.id} href={t.href} prefetch={false} className={cls(active)} aria-current={active ? "page" : undefined}>
+        // E2.1: href absoluto (app externa) → <a> de documento; relativos → <Link>.
+        const external = /^https?:\/\//.test(t.href);
+        const inner = (
+          <>
             <LucideIcon name={t.icon} size={22} />
             <span>{t.name}</span>
+          </>
+        );
+        return external ? (
+          <a key={t.id} href={t.href} className={cls(active)} aria-current={active ? "page" : undefined}>
+            {inner}
+          </a>
+        ) : (
+          <Link key={t.id} href={t.href} prefetch={false} className={cls(active)} aria-current={active ? "page" : undefined}>
+            {inner}
           </Link>
         );
       })}
