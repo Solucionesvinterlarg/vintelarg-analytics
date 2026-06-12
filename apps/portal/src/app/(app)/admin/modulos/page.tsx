@@ -1,12 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Puzzle, ShieldX, Lock,
+  Puzzle, ShieldX, SlidersHorizontal,
   Headset, ShoppingCart, Users, BarChart3, Bot, LayoutTemplate, GraduationCap, Truck, MessageSquare, Undo2,
   ShieldCheck, Coins, Box, HardDrive, Settings, Search,
 } from "lucide-react";
 import { DesktopTopBar } from "@/components/shells/desktop-topbar";
-import { PortalBadge } from "@/components/portal/badge";
 import { getOrganizationModules, type OrgModule } from "@/lib/queries";
+import { getModuleAppLinks } from "@/lib/idp-apps";
+import { ModuleToggle } from "@/components/portal/module-toggle";
 import { getCurrentUser } from "@/lib/session";
 import { normalizeRole } from "@/lib/portal-config";
 
@@ -50,7 +51,11 @@ export default async function ModulosPage() {
     );
   }
 
-  const modules = await getOrganizationModules(user.orgId);
+  const [modules, appLinks] = await Promise.all([
+    getOrganizationModules(user.orgId),
+    getModuleAppLinks(),
+  ]);
+  const appKeys = new Set(appLinks.keys());
   const negocio = modules.filter((m) => m.moduleType === "negocio");
   const infra = modules.filter((m) => m.moduleType === "infra");
 
@@ -61,25 +66,25 @@ export default async function ModulosPage() {
         <EmptyState />
       ) : (
         <div className="flex-1 overflow-y-auto px-6 pb-6 pt-3.5">
-          {/* Nota de solo lectura */}
+          {/* Nota: habilitación editable, por módulo y per-org */}
           <div className="mb-5 flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "var(--aw-violet-light)", border: "0.5px solid var(--aw-hairline)" }}>
-            <Lock size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" style={{ color: "var(--aw-violet)" }} />
+            <SlidersHorizontal size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" style={{ color: "var(--aw-violet)" }} />
             <p className="text-[13px] leading-relaxed text-muted-foreground">
-              <span className="font-semibold text-foreground">Vista de solo lectura.</span> La activación de módulos
-              la gestiona Vintelarg como parte del plan de tu organización. Desde acá podés ver qué módulos tenés y
-              su estado, pero no se editan desde el portal.
+              <span className="font-semibold text-foreground">Habilitación por módulo.</span> El toggle prende/apaga
+              TODOS los ítems de menú del módulo para tu organización. Los módulos <span className="font-semibold text-foreground">App</span> abren
+              su aplicación cuando están activos (o muestran “Próximamente” si los apagás); los internos se muestran según su pantalla.
             </p>
           </div>
 
-          <ModuleSection title="Módulos de negocio" modules={negocio} />
-          <ModuleSection title="Servicios base" modules={infra} />
+          <ModuleSection title="Módulos de negocio" modules={negocio} appKeys={appKeys} />
+          <ModuleSection title="Servicios base" modules={infra} appKeys={appKeys} />
         </div>
       )}
     </>
   );
 }
 
-function ModuleSection({ title, modules }: { title: string; modules: OrgModule[] }) {
+function ModuleSection({ title, modules, appKeys }: { title: string; modules: OrgModule[]; appKeys: Set<string> }) {
   if (modules.length === 0) return null;
   const activos = modules.filter((m) => m.active).length;
   return (
@@ -90,14 +95,14 @@ function ModuleSection({ title, modules }: { title: string; modules: OrgModule[]
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {modules.map((m) => (
-          <ModuleCard key={m.moduleKey} mod={m} />
+          <ModuleCard key={m.moduleKey} mod={m} isApp={appKeys.has(m.moduleKey)} />
         ))}
       </div>
     </section>
   );
 }
 
-function ModuleCard({ mod }: { mod: OrgModule }) {
+function ModuleCard({ mod, isApp }: { mod: OrgModule; isApp: boolean }) {
   const { label, Icon } = present(mod.moduleKey);
   return (
     <div className="flex items-center gap-3 rounded-xl bg-card px-4 py-3" style={{ border: "0.5px solid var(--aw-hairline)" }}>
@@ -109,11 +114,18 @@ function ModuleCard({ mod }: { mod: OrgModule }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-bold text-foreground">{label}</div>
-        <div className="truncate text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>{mod.moduleKey}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>{mod.moduleKey}</span>
+          <span
+            className="shrink-0 rounded px-1 py-px text-[9px] font-bold uppercase tracking-wide"
+            style={isApp ? { background: "var(--aw-violet-light)", color: "var(--aw-violet)" } : { background: "var(--aw-chalk)", color: "var(--aw-stone)" }}
+            title={isApp ? "Módulo-app del IdP (abre su aplicación)" : "Módulo interno del Portal"}
+          >
+            {isApp ? "App" : "Interno"}
+          </span>
+        </div>
       </div>
-      <PortalBadge tone={mod.active ? "violet" : "neutral"} dot>
-        {mod.active ? "Activo" : "Inactivo"}
-      </PortalBadge>
+      <ModuleToggle moduleKey={mod.moduleKey} active={mod.active} label={label} />
     </div>
   );
 }
