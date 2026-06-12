@@ -10,7 +10,7 @@ import {
 
 /**
  * Menú de usuario unificado (avatar arriba-derecha). Dropdown con:
- *  - Mi perfil → IdP (deshabilitado hasta que el IdP tenga pantalla de perfil).
+ *  - Mi perfil → /api/auth/profile (redirige al perfil del IdP vía AUTH_ISSUER).
  *  - Cerrar sesión → /api/auth/logout (RP-initiated logout). Es un <a href> —
  *    navegación de DOCUMENTO, no Link/RSC, para no chocar con el guard de
  *    prefetch del login ni romper el end_session del IdP.
@@ -29,9 +29,8 @@ export function UserMenu({ initials }: { initials: string }) {
         {initials}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="min-w-44">
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem render={<a href="/api/auth/profile" />}>
           <User /> Mi perfil
-          <span className="ml-auto text-[10px] font-medium text-muted-foreground">Pronto</span>
         </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" render={<a href="/api/auth/logout" />}>
           <LogOut /> Cerrar sesión
