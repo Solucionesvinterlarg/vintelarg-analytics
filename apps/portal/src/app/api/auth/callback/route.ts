@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeCodeForTokens, verifyIdToken, claimsToUser } from "@/lib/auth";
-import { createSessionToken, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/session-token";
+import { createSessionToken, SESSION_COOKIE, ID_TOKEN_COOKIE, SESSION_MAX_AGE } from "@/lib/session-token";
 import { landingForRole } from "@/lib/portal-config";
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:3002";
@@ -34,13 +34,17 @@ export async function GET(req: NextRequest) {
 
     // Aterrizaje según rol (desktop dashboard/admin/atencion · mobile home).
     const res = NextResponse.redirect(`${APP_URL}${landingForRole(user.role)}`);
-    res.cookies.set(SESSION_COOKIE, session, {
+    const cookieOpts = {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "lax" as const,
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: SESSION_MAX_AGE,
-    });
+    };
+    res.cookies.set(SESSION_COOKIE, session, cookieOpts);
+    // id_token guardado para el RP-initiated logout (id_token_hint, requerido por
+    // el end_session_endpoint del IdP).
+    res.cookies.set(ID_TOKEN_COOKIE, tokens.id_token, cookieOpts);
     for (const c of ["oidc_state", "oidc_nonce", "oidc_verifier"]) {
       res.cookies.set(c, "", { path: "/", maxAge: 0 });
     }
