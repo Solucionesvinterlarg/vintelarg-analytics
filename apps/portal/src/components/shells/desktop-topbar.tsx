@@ -2,6 +2,7 @@
 
 import { Bell, ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useShellStore } from "@/lib/shell-store";
+import { UserMenu } from "@/components/portal/user-menu";
 
 /** Topbar desktop 64px: toggle colapsar + título + filtros + bell + avatar. */
 export function DesktopTopBar({
@@ -54,9 +55,7 @@ export function DesktopTopBar({
           <Bell size={16} strokeWidth={1.5} className="text-foreground" />
           <span className="absolute right-[7px] top-1.5 size-[7px] rounded-full" style={{ background: "var(--aw-violet)" }} />
         </div>
-        <div className="grid size-[34px] place-items-center rounded-full text-[11px] font-extrabold text-white" style={{ background: "var(--aw-violet)" }}>
-          {initials}
-        </div>
+        <UserMenu initials={initials} />
       </div>
     </header>
   );
