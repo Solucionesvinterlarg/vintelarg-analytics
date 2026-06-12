@@ -4,11 +4,11 @@
  * Enfoque híbrido:
  *  - PRESENTACIÓN (label, icono lucide, href, primary, tinte) vive en el código,
  *    en `SECTION_CATALOG`, indexado por la CLAVE de recurso ("dashboard:360").
- *  - PERMISOS (qué claves ve cada rol) son datos: hoy un stand-in estático
- *    (`ROLE_RESOURCE_KEYS`) que el Commit B reemplaza por la matriz de la base
- *    (`01_auth_role_permissions`, allowed=true). El menú = catálogo filtrado por
- *    las claves permitidas, ordenado por `SECTION_ORDER` (orden del código, NO
- *    de la base).
+ *  - PERMISOS (qué claves ve cada rol) son DATOS de la base
+ *    (`01_auth_role_permissions`, allowed=true), leídos en runtime por
+ *    `getNavForUser`/`getAllowedResources` (lib/queries.ts). NO se hardcodean
+ *    claves por rol acá. El menú = catálogo filtrado por las claves permitidas,
+ *    ordenado por `SECTION_ORDER` (orden del código, NO de la base).
  *
  * Los iconos se referencian por NOMBRE lucide (string) y se resuelven en el
  * cliente vía <LucideIcon name>, para poder pasar nav desde un Server Component.
@@ -279,50 +279,11 @@ export const SECTION_ORDER: string[] = [
 
 const ORDER_INDEX: Record<string, number> = Object.fromEntries(SECTION_ORDER.map((k, i) => [k, i]));
 
-/**
- * Stand-in estático de la matriz `01_auth_role_permissions`: qué claves ve cada
- * rol. El Commit B lo reemplaza por una lectura de la base (allowed=true). El
- * ORDEN acá no importa: el render ordena por SECTION_ORDER.
- */
-const COMERCIAL_KEYS = [
-  "dashboard:360", "dashboard:fuerza-ventas", "dashboard:performance", "dashboard:top-performers",
-  "dashboard:mix-productos", "dashboard:cobertura", "dashboard:reportes", "dashboard:tendencia",
-  "dashboard:plan-bi", "sat:crm", "shared:academia",
-];
-
-export const ROLE_RESOURCE_KEYS: Record<Role, string[]> = {
-  admin: [
-    "admin:panel", "admin:usuarios", "admin:organizaciones", "admin:permisos", "admin:modulos",
-    "admin:campanas", "dashboard:objetivos", "dashboard:360", "dashboard:reportes", "shared:academia",
-  ],
-  gerente_comercial: [
-    "dashboard:360", "dashboard:fuerza-ventas", "dashboard:performance", "dashboard:top-performers",
-    "ops:reclamos", "dashboard:indicaciones", "dashboard:onboarding", "dashboard:estado-cuenta",
-    "dashboard:mix-productos", "dashboard:cobertura", "dashboard:alertas", "dashboard:reportes",
-    "dashboard:objetivos", "dashboard:tendencia", "dashboard:plan-bi", "shared:academia", "ops:tickets",
-  ],
-  atencion_cliente: ["ops:tickets", "ops:reclamos", "sat:crm", "dashboard:fuerza-ventas", "shared:academia"],
-  comercial: COMERCIAL_KEYS,
-  marketing: [
-    "dashboard:360", "dashboard:performance", "dashboard:mix-productos", "dashboard:tendencia",
-    "dashboard:plan-bi", "dashboard:reportes", "sat:crm", "shared:academia",
-  ],
-  // Back-office sin nav dedicada todavía → vista comercial.
-  cuentas_corrientes: COMERCIAL_KEYS,
-  administracion: COMERCIAL_KEYS,
-  deposito: COMERCIAL_KEYS,
-  lci_lider: [
-    "lci:inicio", "lci:campana", "lci:red", "lci:bonificacion", "lci:dashboard",
-    "lci:revendedora", "lci:pedido-woe", "lci:simulador", "lci:plan-lucero", "lci:reportes",
-    "lci:asistente", "lci:perfil", "shared:academia",
-  ],
-  emprendedor: [
-    "emp:inicio", "emp:catalogo", "emp:logros", "emp:perfil",
-    "emp:finanzas", "emp:negocio", "emp:programas", "emp:incentivos",
-    "emp:seguimiento", "emp:indicaciones", "emp:reclamos", "emp:novedades", "emp:onboarding",
-    "shared:academia",
-  ],
-};
+// La visibilidad del menú (qué clave ve cada rol) sale 100% de la matriz de
+// permisos de la base (`01_auth_role_permissions`) vía
+// `getNavForUser`/`getAllowedResources` en lib/queries.ts. NO se hardcodean
+// claves por rol acá: se removió el stand-in estático (ROLE_RESOURCE_KEYS) para
+// no tener dos fuentes de verdad ni confundir lecturas futuras.
 
 // ============================================================
 //  Override de href por rol (genérico, reusable).
@@ -431,23 +392,6 @@ export function tabsFromSections(sections: Section[]): Section[] {
 export function extrasFromSections(sections: Section[]): Section[] {
   const tabIds = new Set(tabsFromSections(sections).map((s) => s.id));
   return sections.filter((s) => !tabIds.has(s.id));
-}
-
-// ---- API por rol (stand-in estático; Commit B añade la variante async DB) ----
-
-/** Lista completa de secciones del rol (para el sidebar). */
-export function navForRole(raw: string | undefined | null): Section[] {
-  return applyHrefOverrides(raw, sectionsFromKeys(ROLE_RESOURCE_KEYS[normalizeRole(raw)]));
-}
-
-/** Secciones `primary` (máx. 4) que se muestran como bottom-tabs en mobile. */
-export function tabsForRole(raw: string | undefined | null): Section[] {
-  return tabsFromSections(navForRole(raw));
-}
-
-/** Resto de secciones (no-tab) que se muestran en el sheet "Más" en mobile. */
-export function extraSectionsForRole(raw: string | undefined | null): Section[] {
-  return extrasFromSections(navForRole(raw));
 }
 
 /** Filtros globales del topbar desktop (handoff). */
