@@ -1,6 +1,7 @@
-import { CrmPlaceholder } from "@/components/portal/crm-placeholder";
+import { Proximamente } from "@/components/portal/proximamente";
 
-// Servida por el módulo CRM (@vintelarg/crm). Sin badge MOCK.
+// Dashboard de CONSULTA de reclamos: interno del Portal, todavía sin desarrollar
+// (como reportería). El proceso operativo de reclamos vive en su módulo, no acá.
 export default function ReclamosPage() {
-  return <CrmPlaceholder title="Gestión de reclamos" />;
+  return <Proximamente title="Consulta de reclamos" />;
 }

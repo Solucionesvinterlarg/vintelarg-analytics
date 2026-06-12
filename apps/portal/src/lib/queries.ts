@@ -566,21 +566,24 @@ export async function getNavForUser(roleKey: string, orgId: string): Promise<Sec
   } catch (err) {
     console.error(`[portal] getActiveModules falló (org=${orgId}); sin cascada de módulos:`, err);
   }
-  let result: Section[];
-  if (!activeModules) {
-    result = sections;
-  } else {
-    const active = activeModules;
-    result = sections.filter((s) => !s.module || active.has(s.module));
-  }
-
-  // E2.1: ítems-módulo cuya app está disponible en el IdP abren su `uri` real
-  // (href absoluto → el shell lo renderiza como <a>). Falla suave (Map vacío) →
-  // se deja el href original del catálogo.
+  // E2.2: el comportamiento de cada ítem-módulo depende de si su módulo es una
+  // APP del IdP (linkeada a oauth_client → aparece en el map del endpoint) o un
+  // módulo INTERNO del Portal.
   const appLinks = await getModuleAppLinks();
-  return result.map((s) => {
-    if (!s.module) return s;
+  const active = activeModules;
+  return sections.flatMap((s): Section[] => {
+    if (!s.module) return [s]; // sin gate de módulo → siempre visible
     const link = appLinks.get(s.module);
-    return link?.available ? { ...s, href: link.uri } : s;
+    if (link) {
+      // Módulo-APP: NUNCA lo oculta la cascada. `available` → abre su uri (href
+      // absoluto → <a>). No-disponible (inactivo-en-org / app disabled / rol sin
+      // allowed_roles) → "Próximamente" genérica.
+      return [{ ...s, href: link.available ? link.uri : "/proximamente" }];
+    }
+    // Módulo INTERNO: cascada actual (inactivo-en-org → oculto). Su pantalla
+    // (real si está desarrollada, o "Próximamente" en su propia ruta si no) la
+    // define el destino del ítem, no este filtro.
+    if (active && !active.has(s.module)) return [];
+    return [s];
   });
 }

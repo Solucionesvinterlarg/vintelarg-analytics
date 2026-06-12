@@ -294,28 +294,13 @@ const ORDER_INDEX: Record<string, number> = Object.fromEntries(SECTION_ORDER.map
 //  Pensado para reutilizarse con otros perfiles que compartan claves.
 // ============================================================
 export const ROLE_HREF_OVERRIDES: Partial<Record<Role, Record<string, string>>> = {
-  gerente_comercial: {
-    // Reclamos/Tickets del gerente: placeholder del módulo CRM (no el /atencion real).
-    "ops:reclamos": "/dashboard/reclamos",
-    "ops:tickets": "/dashboard/tickets",
-  },
-  marketing: {
-    // CRM Contactos de marketing: placeholder del módulo CRM (no el /atencion real).
-    "sat:crm": "/dashboard/crm",
-  },
-  comercial: {
-    // CRM Contactos de comercial: placeholder del módulo CRM (no el /atencion real).
-    "sat:crm": "/dashboard/crm",
-  },
-  // Back-office interno: CRM Contactos → placeholder del módulo CRM.
-  cuentas_corrientes: { "sat:crm": "/dashboard/crm" },
-  administracion: { "sat:crm": "/dashboard/crm" },
-  deposito: { "sat:crm": "/dashboard/crm" },
-  // Atención al cliente: CRM Contactos → placeholder. Tickets/Reclamos son
-  // navegación interna del módulo CRM, NO ítems del portal.
-  atencion_cliente: { "sat:crm": "/dashboard/crm" },
-  // Emprendedora: Academia se abre como app EXTERNA (ingreso, no el grid del
-  // gerente). Mismo criterio que CRM Contactos.
+  // Reclamos del gerente: es el DASHBOARD DE CONSULTA de reclamos (interno del
+  // Portal, sin desarrollar como reportería) → su ruta muestra la "Próximamente"
+  // genérica. El proceso operativo de reclamos vive en su módulo, no acá.
+  // (sat:crm y ops:tickets son module:"crm" = app externa → abren su uri vía el
+  //  cruce con el IdP en getNavForUser; ya no necesitan override a un placeholder.)
+  gerente_comercial: { "ops:reclamos": "/dashboard/reclamos" },
+  // Emprendedora: Academia se abre como app EXTERNA (ingreso, no el grid del gerente).
   emprendedor: { "shared:academia": "/emp/academia" },
   // Líder Comercial: Academia = app externa (placeholder, no se maqueta el grid).
   lci_lider: { "shared:academia": "/lci/academia" },
